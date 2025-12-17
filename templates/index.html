@@ -232,64 +232,70 @@
             speedValue.textContent = e.target.value + 'x';
         });
 
-        // Play 버튼
-        playBtn.addEventListener('click', async () => {
-            if (isPlaying && currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-                isPlaying = false;
-                playBtn.innerHTML = '▶️ Play';
-                playBtn.classList.remove('btn-stop');
-                playBtn.classList.add('btn-play');
-                status.textContent = '⏸️ Stopped';
-                return;
-            }
+       // Play 버튼 (92번째 줄 근처)
+playBtn.addEventListener('click', async () => {
+    // 기존 음성 먼저 정지 (추가!)
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+    }
 
-            status.textContent = '⏳ Processing...';
+    // Stop 버튼으로 작동 중이면 정지만
+    if (isPlaying) {
+        isPlaying = false;
+        playBtn.innerHTML = '▶️ Play';
+        playBtn.classList.remove('btn-stop');
+        playBtn.classList.add('btn-play');
+        status.textContent = '⏸️ Stopped';
+        return;
+    }
 
-            try {
-                const response = await fetch('/adjust', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        filename: null,
-                        gender: genderSlider.value,
-                        pitch: pitchSlider.value,
-                        speed: speedSlider.value
-                    })
-                });
+    status.textContent = '⏳ Processing...';
 
-                const data = await response.json();
-                adjustedFilename = data.output;
-
-                currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
-                
-                currentAudio.addEventListener('ended', () => {
-                    isPlaying = false;
-                    playBtn.innerHTML = '▶️ Play';
-                    playBtn.classList.remove('btn-stop');
-                    playBtn.classList.add('btn-play');
-                    status.textContent = '✅ Finished';
-                });
-
-                currentAudio.play();
-                isPlaying = true;
-                playBtn.innerHTML = '⏹️ Stop';
-                playBtn.classList.remove('btn-play');
-                playBtn.classList.add('btn-stop');
-
-                plotImage.src = `/static/plots/${data.plot}?t=${Date.now()}`;
-                visualization.classList.add('active');
-
-                status.textContent = '▶️ Playing...';
-            } catch (error) {
-                status.textContent = '❌ Error processing audio';
-                isPlaying = false;
-                playBtn.innerHTML = '▶️ Play';
-                playBtn.classList.remove('btn-stop');
-                playBtn.classList.add('btn-play');
-            }
+    try {
+        const response = await fetch('/adjust', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: null,
+                gender: genderSlider.value,
+                pitch: pitchSlider.value,
+                speed: speedSlider.value
+            })
         });
+
+        const data = await response.json();
+        adjustedFilename = data.output;
+
+        currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
+        
+        currentAudio.addEventListener('ended', () => {
+            isPlaying = false;
+            playBtn.innerHTML = '▶️ Play';
+            playBtn.classList.remove('btn-stop');
+            playBtn.classList.add('btn-play');
+            status.textContent = '✅ Finished';
+        });
+
+        currentAudio.play();
+        isPlaying = true;
+        playBtn.innerHTML = '⏹️ Stop';
+        playBtn.classList.remove('btn-play');
+        playBtn.classList.add('btn-stop');
+
+        plotImage.src = `/static/plots/${data.plot}?t=${Date.now()}`;
+        visualization.classList.add('active');
+
+        status.textContent = '▶️ Playing...';
+    } catch (error) {
+        status.textContent = '❌ Error processing audio';
+        isPlaying = false;
+        playBtn.innerHTML = '▶️ Play';
+        playBtn.classList.remove('btn-stop');
+        playBtn.classList.add('btn-play');
+    }
+});
+
 
         // Save 버튼
         saveBtn.addEventListener('click', () => {
