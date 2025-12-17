@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Adjuster - Dual Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        .dual-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+        .upload-area.dragover {
+            background: #e8f0ff;
+            border-color: #667eea;
+        }
+        .upload-area h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .upload-area p {
+            font-size: 12px;
+            color: #666;
+        }
+        .controls {
+            display: none;
+        }
+        .controls.active {
+            display: block;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        /* Gender 슬라이더 그라데이션 */
+        #genderA, #genderB {
+            background: linear-gradient(to right, #3b82f6 0%, #9333ea 50%, #ec4899 100%);
+        }
+        .value-display {
+            text-align: center;
+            font-size: 16px;
+            color: #667eea;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .gender-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-play {
+            background: #667eea;
+            color: white;
+        }
+        .btn-play:hover {
+            background: #5568d3;
+        }
+        .btn-stop {
+            background: #e53e3e;
+            color: white;
+        }
+        .btn-stop:hover {
+            background: #c53030;
+        }
+        .btn-save {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-save:hover {
+            background: #38a169;
+        }
+        .btn-reset {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #d97706;
+        }
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 12px;
+            min-height: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .visualization {
+            margin-top: 20px;
+            display: none;
+        }
+        .visualization.active {
+            display: block;
+        }
+        .visualization img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .visualization h3 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        @media (max-width: 1200px) {
+            .dual-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>🎙️ Voice Adjuster - Dual File Comparison</h1>
+        
+        <div class="dual-container">
+            <!-- Left Panel -->
+            <div class="container">
+                <h2>📁 File A</h2>
+                
+                <div class="upload-area" id="uploadAreaA">
+                    <h3>📁 Drag & Drop Audio File</h3>
+                    <p>or click to select</p>
+                    <input type="file" id="fileInputA" accept="audio/*">
+                </div>
+
+                <div class="controls" id="controlsA">
+                    <!-- Gender 슬라이더 추가! -->
+                    <div class="control-group">
+                        <label for="genderA">Gender Spectrum</label>
+                        <input type="range" id="genderA" min="-5" max="5" value="0" step="1">
+                        <div class="value-display" id="genderValueA">Neutral (0)</div>
+                        <div class="gender-labels">
+                            <span>← Masculine</span>
+                            <span>Neutral</span>
+                            <span>Feminine →</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="pitchA">Pitch Shift (Hz)</label>
+                        <input type="range" id="pitchA" min="-50" max="50" value="0" step="1">
+                        <div class="value-display" id="pitchValueA">0 Hz</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="speedA">Speed</label>
+                        <input type="range" id="speedA" min="0.5" max="2.0" value="1.0" step="0.1">
+                        <div class="value-display" id="speedValueA">1.0x</div>
+                    </div>
+
+                    <div class="buttons">
+                        <button class="btn-play" id="playBtnA">▶️ Play</button>
+                        <button class="btn-save" id="saveBtnA">💾 Save</button>
+                        <button class="btn-reset" id="resetBtnA">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <div class="visualization" id="visualizationA">
+                    <h3>📊 Waveform & Pitch</h3>
+                    <img id="plotImageA" src="" alt="Pitch visualization">
+                </div>
+
+                <div class="status" id="statusA"></div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="container">
+                <h2>📁 File B</h2>
+                
+                <div class="upload-area" id="uploadAreaB">
+                    <h3>📁 Drag & Drop Audio File</h3>
+                    <p>or click to select</p>
+                    <input type="file" id="fileInputB" accept="audio/*">
+                </div>
+
+                <div class="controls" id="controlsB">
+                    <!-- Gender 슬라이더 추가! -->
+                    <div class="control-group">
+                        <label for="genderB">Gender Spectrum</label>
+                        <input type="range" id="genderB" min="-5" max="5" value="0" step="1">
+                        <div class="value-display" id="genderValueB">Neutral (0)</div>
+                        <div class="gender-labels">
+                            <span>← Masculine</span>
+                            <span>Neutral</span>
+                            <span>Feminine →</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="pitchB">Pitch Shift (Hz)</label>
+                        <input type="range" id="pitchB" min="-50" max="50" value="0" step="1">
+                        <div class="value-display" id="pitchValueB">0 Hz</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="speedB">Speed</label>
+                        <input type="range" id="speedB" min="0.5" max="2.0" value="1.0" step="0.1">
+                        <div class="value-display" id="speedValueB">1.0x</div>
+                    </div>
+
+                    <div class="buttons">
+                        <button class="btn-play" id="playBtnB">▶️ Play</button>
+                        <button class="btn-save" id="saveBtnB">💾 Save</button>
+                        <button class="btn-reset" id="resetBtnB">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <div class="visualization" id="visualizationB">
+                    <h3>📊 Waveform & Pitch</h3>
+                    <img id="plotImageB" src="" alt="Pitch visualization">
+                </div>
+
+                <div class="status" id="statusB"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Panel A 초기화
+        initPanel('A');
+        // Panel B 초기화
+        initPanel('B');
+
+        function initPanel(panel) {
+            const uploadArea = document.getElementById(`uploadArea${panel}`);
+            const fileInput = document.getElementById(`fileInput${panel}`);
+            const controls = document.getElementById(`controls${panel}`);
+            const genderSlider = document.getElementById(`gender${panel}`); // 추가!
+            const pitchSlider = document.getElementById(`pitch${panel}`);
+            const speedSlider = document.getElementById(`speed${panel}`);
+            const genderValue = document.getElementById(`genderValue${panel}`); // 추가!
+            const pitchValue = document.getElementById(`pitchValue${panel}`);
+            const speedValue = document.getElementById(`speedValue${panel}`);
+            const playBtn = document.getElementById(`playBtn${panel}`);
+            const saveBtn = document.getElementById(`saveBtn${panel}`);
+            const resetBtn = document.getElementById(`resetBtn${panel}`);
+            const status = document.getElementById(`status${panel}`);
+            const visualization = document.getElementById(`visualization${panel}`);
+            const plotImage = document.getElementById(`plotImage${panel}`);
+
+            let uploadedFilename = null;
+            let adjustedFilename = null;
+            let currentAudio = null;
+            let isPlaying = false;
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) handleFile(file);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) handleFile(file);
+            });
+
+            async function handleFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                status.textContent = '⏳ Uploading...';
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    uploadedFilename = data.filename;
+                    controls.classList.add('active');
+                    status.textContent = '✅ Uploaded! Adjust and Play.';
+                } catch (error) {
+                    status.textContent = '❌ Upload failed';
+                }
+            }
+
+            // Gender 슬라이더 이벤트 추가!
+            genderSlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                let label;
+                if (value < 0) {
+                    label = `Masculine (${value})`;
+                } else if (value > 0) {
+                    label = `Feminine (+${value})`;
+                } else {
+                    label = 'Neutral (0)';
+                }
+                genderValue.textContent = label;
+            });
+
+            pitchSlider.addEventListener('input', (e) => {
+                pitchValue.textContent = e.target.value + ' Hz';
+            });
+
+            speedSlider.addEventListener('input', (e) => {
+                speedValue.textContent = e.target.value + 'x';
+            });
+
+            playBtn.addEventListener('click', async () => {
+                // Gender 선택시 파일 업로드 불필요!
+                if (!uploadedFilename && genderSlider.value == 0) {
+                    status.textContent = '⚠️ Upload file or select gender preset';
+                    return;
+                }
+
+                if (isPlaying && currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                    isPlaying = false;
+                    playBtn.innerHTML = '▶️ Play';
+                    playBtn.classList.remove('btn-stop');
+                    playBtn.classList.add('btn-play');
+                    status.textContent = '⏸️ Stopped';
+                    return;
+                }
+
+                status.textContent = '⏳ Processing...';
+
+                try {
+                    const response = await fetch('/adjust', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: uploadedFilename,
+                            pitch: pitchSlider.value,
+                            speed: speedSlider.value,
+                            gender: genderSlider.value // 추가!
+                        })
+                    });
+
+                    const data = await response.json();
+                    adjustedFilename = data.output;
+
+                    currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
+                    
+                    currentAudio.addEventListener('ended', () => {
+                        isPlaying = false;
+                        playBtn.innerHTML = '▶️ Play';
+                        playBtn.classList.remove('btn-stop');
+                        playBtn.classList.add('btn-play');
+                        status.textContent = '✅ Finished';
+                    });
+
+                    currentAudio.play();
+                    isPlaying = true;
+                    playBtn.innerHTML = '⏹️ Stop';
+                    playBtn.classList.remove('btn-play');
+                    playBtn.classList.add('btn-stop');
+
+                    plotImage.src = `/static/plots/${data.plot}?t=${Date.now()}`;
+                    visualization.classList.add('active');
+
+                    status.textContent = '▶️ Playing...';
+                } catch (error) {
+                    status.textContent = '❌ Error';
+                    isPlaying = false;
+                    playBtn.innerHTML = '▶️ Play';
+                    playBtn.classList.remove('btn-stop');
+                    playBtn.classList.add('btn-play');
+                }
+            });
+
+            saveBtn.addEventListener('click', () => {
+                if (!adjustedFilename) {
+                    status.textContent = '⚠️ Play first!';
+                    return;
+                }
+                window.location.href = `/download/${adjustedFilename}`;
+                status.textContent = '💾 Downloading...';
+            });
+
+            resetBtn.addEventListener('click', () => {
+                genderSlider.value = 0; // 추가!
+                pitchSlider.value = 0;
+                speedSlider.value = 1.0;
+                genderValue.textContent = 'Neutral (0)'; // 추가!
+                pitchValue.textContent = '0 Hz';
+                speedValue.textContent = '1.0x';
+                
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                isPlaying = false;
+                playBtn.innerHTML = '▶️ Play';
+                playBtn.classList.remove('btn-stop');
+                playBtn.classList.add('btn-play');
+                
+                status.textContent = '🔄 Reset to default values';
+            });
+        }
+    </script>
+</body>
+</html>
