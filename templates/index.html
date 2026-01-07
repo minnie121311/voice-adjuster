@@ -12,7 +12,7 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f4f5fb 0%, #fbf8ff 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,15 +23,42 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             max-width: 600px;
             width: 100%;
+            position: relative;
+        }
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 150px;
+            height: 75px;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         h1 {
             text-align: center;
             color: #333;
             margin-bottom: 30px;
+            margin-top: 60px;
             font-size: 28px;
+        }
+        .introduction {
+            background: #f9fafb;
+            border-left: 4px solid #7c3aed;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .introduction p {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.6;
+            margin: 0;
         }
         .control-group {
             margin-bottom: 30px;
@@ -104,30 +131,30 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .btn-play {
-            background: #667eea;
+            background: #6b7280;
             color: white;
         }
-        .btn-play:hover {
-            background: #5568d3;
+        .btn-play:hover:not(:disabled) {
+            background: #4b5563;
         }
         .btn-stop {
-            background: #e53e3e;
+            background: #4b5563;
             color: white;
         }
-        .btn-save {
-            background: #48bb78;
+        .btn-stop:hover:not(:disabled) {
+            background: #374151;
+        }
+        .btn-submit {
+            background: #7c3aed;
             color: white;
         }
-        .btn-save:hover {
-            background: #38a169;
-        }
-        .btn-reset {
-            background: #f59e0b;
-            color: white;
-        }
-        .btn-reset:hover {
-            background: #d97706;
+        .btn-submit:hover:not(:disabled) {
+            background: #6d28d9;
         }
         .status {
             text-align: center;
@@ -136,23 +163,19 @@
             font-size: 14px;
             min-height: 25px;
         }
-        .visualization {
-            margin-top: 30px;
-            display: none;
-        }
-        .visualization.active {
-            display: block;
-        }
-        .visualization img {
-            width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎙️ Voice Gender Adjuster</h1>
+        <div class="logo">
+            <img src="/static/ucl_logo.png" alt="UCL Logo">
+        </div>
+        
+        <h1>🎙️ Voice Adjuster</h1>
+        
+        <div class="introduction">
+            <p><strong>Introduction:</strong> Keep adjusting with Play and Stop until you find your preferred voice. Once you are satisfied with the tone, click Submit. You can only submit once.</p>
+        </div>
         
         <div class="control-group">
             <label for="gender">Gender Spectrum</label>
@@ -178,13 +201,9 @@
         </div>
 
         <div class="buttons">
-            <button class="btn-play" id="playBtn">▶️ Play</button>
-            <button class="btn-save" id="saveBtn">💾 Save</button>
-            <button class="btn-reset" id="resetBtn">🔄 Reset</button>
-        </div>
-
-        <div class="visualization" id="visualization">
-            <img id="plotImage" src="" alt="Waveform & Pitch">
+            <button class="btn-play" id="playBtn">▶︎ Play</button>
+            <button class="btn-stop" id="stopBtn" disabled>◼︎ Stop</button>
+            <button class="btn-submit" id="submitBtn">✔︎ Submit</button>
         </div>
 
         <div class="status" id="status"></div>
@@ -198,17 +217,15 @@
         const pitchValue = document.getElementById('pitchValue');
         const speedValue = document.getElementById('speedValue');
         const playBtn = document.getElementById('playBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const resetBtn = document.getElementById('resetBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const submitBtn = document.getElementById('submitBtn');
         const status = document.getElementById('status');
-        const visualization = document.getElementById('visualization');
-        const plotImage = document.getElementById('plotImage');
 
         let adjustedFilename = null;
         let currentAudio = null;
-        let isPlaying = false;
+        let hasSubmitted = false;
 
-        // Gender 슬라이더
+        // Gender slider
         genderSlider.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             let label;
@@ -222,110 +239,123 @@
             genderValue.textContent = label;
         });
 
-        // Pitch 슬라이더
+        // Pitch slider
         pitchSlider.addEventListener('input', (e) => {
             pitchValue.textContent = e.target.value + ' Hz';
         });
 
-        // Speed 슬라이더
+        // Speed slider
         speedSlider.addEventListener('input', (e) => {
             speedValue.textContent = e.target.value + 'x';
         });
 
-       // Play 버튼 (92번째 줄 근처)
-playBtn.addEventListener('click', async () => {
-    // 기존 음성 먼저 정지 (추가!)
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-    }
+        // Play button
+        playBtn.addEventListener('click', async () => {
+            playBtn.disabled = true;
+            status.textContent = '⏳ Processing...';
 
-    // Stop 버튼으로 작동 중이면 정지만
-    if (isPlaying) {
-        isPlaying = false;
-        playBtn.innerHTML = '▶️ Play';
-        playBtn.classList.remove('btn-stop');
-        playBtn.classList.add('btn-play');
-        status.textContent = '⏸️ Stopped';
-        return;
-    }
+            try {
+                const response = await fetch('/adjust', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: null,
+                        gender: genderSlider.value,
+                        pitch: pitchSlider.value,
+                        speed: speedSlider.value
+                    })
+                });
 
-    status.textContent = '⏳ Processing...';
+                const data = await response.json();
+                adjustedFilename = data.output;
 
-    try {
-        const response = await fetch('/adjust', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filename: null,
-                gender: genderSlider.value,
-                pitch: pitchSlider.value,
-                speed: speedSlider.value
-            })
-        });
+                currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
+                
+                // When playback ends
+                currentAudio.addEventListener('ended', () => {
+                    playBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    status.textContent = '✔︎ Finished';
+                });
 
-        const data = await response.json();
-        adjustedFilename = data.output;
+                // Start playback
+                await currentAudio.play();
+                
+                // Enable Stop button
+                stopBtn.disabled = false;
 
-        currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
-        
-        currentAudio.addEventListener('ended', () => {
-            isPlaying = false;
-            playBtn.innerHTML = '▶️ Play';
-            playBtn.classList.remove('btn-stop');
-            playBtn.classList.add('btn-play');
-            status.textContent = '✅ Finished';
-        });
-
-        currentAudio.play();
-        isPlaying = true;
-        playBtn.innerHTML = '⏹️ Stop';
-        playBtn.classList.remove('btn-play');
-        playBtn.classList.add('btn-stop');
-
-        plotImage.src = `/static/plots/${data.plot}?t=${Date.now()}`;
-        visualization.classList.add('active');
-
-        status.textContent = '▶️ Playing...';
-    } catch (error) {
-        status.textContent = '❌ Error processing audio';
-        isPlaying = false;
-        playBtn.innerHTML = '▶️ Play';
-        playBtn.classList.remove('btn-stop');
-        playBtn.classList.add('btn-play');
-    }
-});
-
-
-        // Save 버튼
-        saveBtn.addEventListener('click', () => {
-            if (!adjustedFilename) {
-                status.textContent = '⚠️ Play first!';
-                return;
+                status.textContent = '▶︎ Playing...';
+                
+            } catch (error) {
+                playBtn.disabled = false;
+                stopBtn.disabled = true;
+                status.textContent = '✕ Error processing audio';
+                console.error(error);
             }
-            window.location.href = `/download/${adjustedFilename}`;
-            status.textContent = '💾 Downloading...';
         });
 
-        // Reset 버튼
-        resetBtn.addEventListener('click', () => {
-            genderSlider.value = 0;
-            pitchSlider.value = 0;
-            speedSlider.value = 1.0;
-            genderValue.textContent = 'Neutral (0)';
-            pitchValue.textContent = '0 Hz';
-            speedValue.textContent = '1.0x';
-            
+        // Stop button
+        stopBtn.addEventListener('click', () => {
             if (currentAudio) {
                 currentAudio.pause();
+                currentAudio.currentTime = 0;
                 currentAudio = null;
             }
-            isPlaying = false;
-            playBtn.innerHTML = '▶️ Play';
-            playBtn.classList.remove('btn-stop');
-            playBtn.classList.add('btn-play');
             
-            status.textContent = '🔄 Reset to default values';
+            playBtn.disabled = false;
+            stopBtn.disabled = true;
+            status.textContent = '◼︎ Stopped';
+        });
+
+        // Submit button - CSV save
+        submitBtn.addEventListener('click', () => {
+            // Block if already submitted
+            if (hasSubmitted) {
+                alert('You have already submitted. You can only submit once.');
+                return;
+            }
+
+            // Confirmation message
+            const confirmSubmit = confirm('You cannot cancel after submission. Are you sure you want to submit?');
+            
+            if (!confirmSubmit) {
+                return; // Cancel - do nothing
+            }
+
+            // Get current slider values
+            const currentGender = genderSlider.value;
+            const currentPitch = pitchSlider.value;
+            const currentSpeed = speedSlider.value;
+            const timestamp = new Date().toISOString();
+            
+            // Create CSV data
+            const headers = ['Timestamp', 'Gender', 'Pitch', 'Speed'];
+            const values = [timestamp, currentGender, currentPitch, currentSpeed];
+            
+            // Add UTF-8 BOM (prevents Excel encoding issues)
+            const csvContent = '\uFEFF' + headers.join(',') + '\n' + values.join(',');
+            
+            // Create CSV file as Blob
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create download link and click
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `voice_data_${Date.now()}.csv`;
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Release URL memory
+            URL.revokeObjectURL(url);
+            
+            // Mark as submitted
+            hasSubmitted = true;
+            submitBtn.disabled = true;
+            status.textContent = '✔︎ Data submitted';
         });
     </script>
 </body>
