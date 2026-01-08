@@ -50,16 +50,24 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             font-size: 26px;
             font-weight: 600;
         }
-        .scenario-title {
-            text-align: center;
-            color: #7c3aed;
-            font-size: 18px;
-            font-weight: 600;
+        .instruction-box {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            border-radius: 6px;
+            padding: 20px;
             margin-bottom: 30px;
+            text-align: center;
+        }
+        .instruction-box p {
+            color: #92400e;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0;
+            font-weight: 500;
         }
         .control-group {
             margin-bottom: 30px;
@@ -212,7 +220,10 @@
         
         <h1>Voice Adjuster</h1>
         
-        <div class="scenario-title" id="scenarioTitle">Loading...</div>
+        <div class="instruction-box">
+            <p><strong>Adjust the voice parameters as much as you want and listen carefully.</strong><br>
+            You can only submit once, so take your time to find your most preferred voice tone.</p>
+        </div>
         
         <div class="control-group">
             <label for="gender">Gender Spectrum</label>
@@ -259,17 +270,14 @@
         // 원본 시나리오
         const scenariosOriginal = [
             {
-                title: "Negative Message",
                 audio: "negative.wav",
                 type: "negative"
             },
             {
-                title: "Positive Message",
                 audio: "positive.wav",
                 type: "positive"
             },
             {
-                title: "Informational Message",
                 audio: "informational.wav",
                 type: "informational"
             }
@@ -308,13 +316,10 @@
         const plotImage = document.getElementById('plotImage');
         const progressBar = document.getElementById('progressBar');
         const trialInfo = document.getElementById('trialInfo');
-        const scenarioTitle = document.getElementById('scenarioTitle');
         const completionMessage = document.getElementById('completionMessage');
 
         // Load scenario
         function loadScenario() {
-            const scenario = scenarios[currentTrial];
-            scenarioTitle.textContent = scenario.title;
             trialInfo.textContent = `Trial ${currentTrial + 1} of 3`;
             progressBar.style.width = `${((currentTrial + 1) / 3) * 100}%`;
 
@@ -367,13 +372,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message_type: scenarios[currentTrial].type,
-                        gender: genderSlider.value,
-                        pitch: pitchSlider.value,
-                        speed: speedSlider.value
+                        gender: parseInt(genderSlider.value),
+                        pitch: parseInt(pitchSlider.value),
+                        speed: parseFloat(speedSlider.value)
                     })
                 });
 
                 const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
                 adjustedFilename = data.output;
 
                 currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
@@ -395,7 +405,7 @@
             } catch (error) {
                 playBtn.disabled = false;
                 stopBtn.disabled = true;
-                status.textContent = '✖︎ Error processing audio';
+                status.textContent = '✖︎ Error: ' + error.message;
                 console.error(error);
             }
         });
