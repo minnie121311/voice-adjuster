@@ -254,9 +254,7 @@
             <button class="btn-submit" id="submitBtn">✔︎ Submit</button>
         </div>
 
-        <div class="visualization" id="visualization">
-            <img id="plotImage" src="" alt="Waveform & Pitch">
-        </div>
+    
 
         <div class="status" id="status"></div>
         
@@ -312,8 +310,6 @@
         const stopBtn = document.getElementById('stopBtn');
         const submitBtn = document.getElementById('submitBtn');
         const status = document.getElementById('status');
-        const visualization = document.getElementById('visualization');
-        const plotImage = document.getElementById('plotImage');
         const progressBar = document.getElementById('progressBar');
         const trialInfo = document.getElementById('trialInfo');
         const completionMessage = document.getElementById('completionMessage');
@@ -334,7 +330,7 @@
             // Reset buttons
             submitBtn.disabled = trialSubmitted[currentTrial];
             status.textContent = trialSubmitted[currentTrial] ? '✔︎ Already submitted' : '';
-            visualization.classList.remove('active');
+    
         }
 
         // Gender slider
@@ -397,8 +393,7 @@
                 await currentAudio.play();
                 stopBtn.disabled = false;
 
-                plotImage.src = `/static/plots/${data.plot}?t=${Date.now()}`;
-                visualization.classList.add('active');
+            
 
                 status.textContent = '▶︎ Playing...';
                 
