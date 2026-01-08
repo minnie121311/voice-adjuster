@@ -5,10 +5,8 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# CSV 파일 경로
 CSV_FILE = 'experiment_data.csv'
 
-# CSV 헤더 초기화
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -18,19 +16,20 @@ if not os.path.exists(CSV_FILE):
 def index():
     return render_template('index.html')
 
-@app.route('/process', methods=['POST'])
-def process_audio():
+@app.route('/adjust', methods=['POST'])
+def adjust_audio():
     data = request.json
     message_type = data.get('message_type', 'negative')
     gender = int(data.get('gender', 0))
-    pitch = float(data.get('pitch', 1.0))
+    pitch = int(data.get('pitch', 0))
     speed = float(data.get('speed', 1.0))
     
-    # 새로운 파일 경로
-    audio_file = f'static/{message_type}_gender_{gender}.wav'
+    # 파일명 생성
+    audio_filename = f"{message_type}_gender_{gender}.wav"
     
     return jsonify({
-        'audio_url': f'/{audio_file}',
+        'output': audio_filename,
+        'plot': 'placeholder.png',
         'parameters': {
             'message_type': message_type,
             'gender': gender,
@@ -39,15 +38,18 @@ def process_audio():
         }
     })
 
-@app.route('/submit', methods=['POST'])
-def submit_data():
+@app.route('/play/<filename>')
+def play_audio(filename):
+    return send_file(f'static/{filename}', mimetype='audio/wav')
+
+@app.route('/save', methods=['POST'])
+def save_data():
     data = request.json
     
-    # CSV에 데이터 저장
     with open(CSV_FILE, 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([
-            datetime.now().isoformat(),
+            data.get('timestamp'),
             data.get('trial_number'),
             data.get('message_type'),
             data.get('gender'),
@@ -55,7 +57,7 @@ def submit_data():
             data.get('speed')
         ])
     
-    return jsonify({'status': 'success', 'message': 'Data saved successfully'})
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
