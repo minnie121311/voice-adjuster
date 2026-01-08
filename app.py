@@ -19,11 +19,17 @@ os.makedirs('static', exist_ok=True)
 os.makedirs('static/output', exist_ok=True)
 os.makedirs('static/plots', exist_ok=True)
 
-# 3가지 메시지 타입 × 11개 gender 파일
 def get_audio_file(message_type, gender_level):
-    """메시지 타입과 gender 레벨에 따른 파일명 반환"""
+    """메시지 타입과 gender 레벨에 따른 파일 경로 반환"""
+    # 폴더명: Negative, Positive, Informational (첫 글자 대문자)
+    folder_name = message_type.capitalize()
+    
+    # 파일명: negative_gender_-5.wav (소문자)
     filename = f"{message_type}_gender_{gender_level}.wav"
-    filepath = os.path.join(app.config['STATIC_FOLDER'], filename)
+    
+    # 전체 경로
+    filepath = os.path.join(app.config['STATIC_FOLDER'], 'voices', folder_name, filename)
+    
     return filepath
 
 @app.route('/')
@@ -43,13 +49,16 @@ def adjust_audio():
     # 파일 경로 설정
     input_path = get_audio_file(message_type, gender_level)
     
-    if not os.path.exists(input_path):
-        return jsonify({'error': f'File not found: {message_type}_gender_{gender_level}.wav'}), 404
-    
     print(f"\n=== Audio Processing ===")
     print(f"Message Type: {message_type}")
     print(f"Gender Level: {gender_level}")
-    print(f"File: {input_path}")
+    print(f"File Path: {input_path}")
+    print(f"File Exists: {os.path.exists(input_path)}")
+    
+    if not os.path.exists(input_path):
+        error_msg = f'File not found: static/voices/{message_type.capitalize()}/{message_type}_gender_{gender_level}.wav'
+        print(f"ERROR: {error_msg}")
+        return jsonify({'error': error_msg}), 404
     
     try:
         # Praat으로 음성 파일 로드
@@ -125,8 +134,9 @@ def adjust_audio():
         })
         
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        error_msg = f"Error processing audio: {str(e)}"
+        print(f"ERROR: {error_msg}")
+        return jsonify({'error': error_msg}), 500
 
 def create_praat_plot(sound, plot_filename, message_type, gender_level, pitch_shift, speed_factor):
     """Praat 스타일 파형 + 피치 그래프"""
@@ -138,7 +148,7 @@ def create_praat_plot(sound, plot_filename, message_type, gender_level, pitch_sh
     # Waveform
     ax1.plot(times, values, linewidth=0.5, color='#2E86AB')
     ax1.set_ylabel('Amplitude', fontsize=12)
-    ax1.set_title(f'{message_type.capitalize()} Message (Gender: {gender_level}, Pitch: {pitch_shift}Hz, Speed: {speed_factor}x)', 
+    ax1.set_title(f'Trial (Gender: {gender_level}, Pitch: {pitch_shift}Hz, Speed: {speed_factor}x)', 
                   fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.3)
     ax1.set_xlim([times[0], times[-1]])
