@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Gender Adjuster</title>
+    <title>Voice Adjuster</title>
     <style>
         * {
             margin: 0;
@@ -43,18 +43,65 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             margin-top: 60px;
             font-size: 28px;
         }
-        .introduction {
+        .participant-id-section {
+            background: #fff7ed;
+            border: 2px solid #fb923c;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .participant-id-section label {
+            display: block;
+            font-weight: 600;
+            color: #c2410c;
+            margin-bottom: 8px;
+        }
+        .participant-id-section input {
+            padding: 10px;
+            width: 200px;
+            border: 2px solid #fb923c;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #7c3aed, #ec4899);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .trial-info {
+            text-align: center;
+            font-size: 18px;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .scenario-box {
             background: #f9fafb;
             border-left: 4px solid #7c3aed;
             padding: 15px 20px;
             margin-bottom: 30px;
             border-radius: 8px;
         }
-        .introduction p {
+        .scenario-box h3 {
+            color: #7c3aed;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .scenario-box p {
             font-size: 14px;
             color: #374151;
             line-height: 1.6;
@@ -76,9 +123,6 @@
             border-radius: 5px;
             outline: none;
             -webkit-appearance: none;
-        }
-        #gender {
-            background: linear-gradient(to right, #3b82f6 0%, #9333ea 50%, #ec4899 100%);
         }
         #pitch, #speed {
             background: #ddd;
@@ -108,13 +152,6 @@
             color: #667eea;
             margin-top: 10px;
             font-weight: bold;
-        }
-        .gender-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #888;
-            margin-top: 8px;
         }
         .buttons {
             display: flex;
@@ -149,12 +186,21 @@
         .btn-stop:hover:not(:disabled) {
             background: #374151;
         }
-        .btn-submit {
+        .btn-next {
             background: #7c3aed;
             color: white;
         }
-        .btn-submit:hover:not(:disabled) {
+        .btn-next:hover:not(:disabled) {
             background: #6d28d9;
+        }
+        .btn-submit-all {
+            background: #059669;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-submit-all:hover:not(:disabled) {
+            background: #047857;
         }
         .status {
             text-align: center;
@@ -172,22 +218,23 @@
         </div>
         
         <h1>🎙️ Voice Adjuster</h1>
-        
-        <div class="introduction">
-            <p><strong>Introduction:</strong> Keep adjusting with Play and Stop until you find your preferred voice. Once you are satisfied with the tone, click Submit. You can only submit once.</p>
-        </div>
-        
-        <div class="control-group">
-            <label for="gender">Gender Spectrum</label>
-            <input type="range" id="gender" min="-5" max="5" value="0" step="1">
-            <div class="value-display" id="genderValue">Neutral (0)</div>
-            <div class="gender-labels">
-                <span>← Masculine</span>
-                <span>Neutral</span>
-                <span>Feminine →</span>
-            </div>
-        </div>
 
+        <div class="participant-id-section" id="participantSection">
+            <label for="participantId">Enter Your Participant ID:</label>
+            <input type="text" id="participantId" placeholder="e.g., P001" required>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        
+        <div class="trial-info" id="trialInfo">Trial 1 of 6</div>
+        
+        <div class="scenario-box" id="scenarioBox">
+            <h3 id="scenarioTitle">Scenario 1: Small Talk</h3>
+            <p id="scenarioText">You're at a networking event...</p>
+        </div>
+        
         <div class="control-group">
             <label for="pitch">Pitch Shift (Hz)</label>
             <input type="range" id="pitch" min="-50" max="50" value="0" step="1">
@@ -203,87 +250,152 @@
         <div class="buttons">
             <button class="btn-play" id="playBtn">▶︎ Play</button>
             <button class="btn-stop" id="stopBtn" disabled>◼︎ Stop</button>
-            <button class="btn-submit" id="submitBtn">✔︎ Submit</button>
+            <button class="btn-next" id="nextBtn">Next Trial →</button>
         </div>
+
+        <button class="btn-submit-all" id="submitBtn" style="display:none;">✔︎ Submit All Data</button>
 
         <div class="status" id="status"></div>
     </div>
 
     <script>
-        const genderSlider = document.getElementById('gender');
+        const scenarios = [
+            {
+                title: "Scenario 1: Small Talk",
+                text: "You're at a networking event and engaging in casual conversation with someone you just met.",
+                audio: "scenario1.wav"
+            },
+            {
+                title: "Scenario 2: Asking for Help",
+                text: "You need to ask a stranger for directions or assistance with something.",
+                audio: "scenario2.wav"
+            },
+            {
+                title: "Scenario 3: Group Discussion",
+                text: "You're participating in a group discussion or meeting with colleagues.",
+                audio: "scenario3.wav"
+            },
+            {
+                title: "Scenario 4: Phone Call",
+                text: "You're making a phone call to book an appointment or inquiry.",
+                audio: "scenario4.wav"
+            },
+            {
+                title: "Scenario 5: Presentation",
+                text: "You're giving a brief presentation or introducing yourself to a group.",
+                audio: "scenario5.wav"
+            },
+            {
+                title: "Scenario 6: Conflict Resolution",
+                text: "You need to address a disagreement or resolve a conflict with someone.",
+                audio: "scenario6.wav"
+            }
+        ];
+
+        let currentTrial = 0;
+        let trials = [];
+        let currentAudio = null;
+        let hasStarted = false;
+
         const pitchSlider = document.getElementById('pitch');
         const speedSlider = document.getElementById('speed');
-        const genderValue = document.getElementById('genderValue');
         const pitchValue = document.getElementById('pitchValue');
         const speedValue = document.getElementById('speedValue');
         const playBtn = document.getElementById('playBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const nextBtn = document.getElementById('nextBtn');
         const submitBtn = document.getElementById('submitBtn');
         const status = document.getElementById('status');
+        const progressBar = document.getElementById('progressBar');
+        const trialInfo = document.getElementById('trialInfo');
+        const scenarioTitle = document.getElementById('scenarioTitle');
+        const scenarioText = document.getElementById('scenarioText');
 
-        let adjustedFilename = null;
-        let currentAudio = null;
-        let hasSubmitted = false;
+        // Initialize trials data
+        function initializeTrials() {
+            trials = scenarios.map((scenario, index) => ({
+                scenario: scenario.title,
+                initialPitch: 0,
+                initialSpeed: 1.0,
+                finalPitch: 0,
+                finalSpeed: 1.0,
+                playbackCount: 0,
+                adjustmentCount: 0
+            }));
+        }
 
-        // Gender slider
-        genderSlider.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value);
-            let label;
-            if (value < 0) {
-                label = `Masculine (${value})`;
-            } else if (value > 0) {
-                label = `Feminine (+${value})`;
-            } else {
-                label = 'Neutral (0)';
-            }
-            genderValue.textContent = label;
-        });
+        // Load scenario
+        function loadScenario() {
+            const scenario = scenarios[currentTrial];
+            scenarioTitle.textContent = scenario.title;
+            scenarioText.textContent = scenario.text;
+            trialInfo.textContent = `Trial ${currentTrial + 1} of ${scenarios.length}`;
+            progressBar.style.width = `${((currentTrial + 1) / scenarios.length) * 100}%`;
+
+            // Reset sliders to trial data
+            pitchSlider.value = trials[currentTrial].finalPitch;
+            speedSlider.value = trials[currentTrial].finalSpeed;
+            pitchValue.textContent = trials[currentTrial].finalPitch + ' Hz';
+            speedValue.textContent = trials[currentTrial].finalSpeed + 'x';
+
+            status.textContent = '';
+        }
 
         // Pitch slider
         pitchSlider.addEventListener('input', (e) => {
             pitchValue.textContent = e.target.value + ' Hz';
+            if (hasStarted) {
+                trials[currentTrial].adjustmentCount++;
+            }
         });
 
         // Speed slider
         speedSlider.addEventListener('input', (e) => {
             speedValue.textContent = e.target.value + 'x';
+            if (hasStarted) {
+                trials[currentTrial].adjustmentCount++;
+            }
         });
 
         // Play button
         playBtn.addEventListener('click', async () => {
+            if (!hasStarted) {
+                const participantId = document.getElementById('participantId').value.trim();
+                if (!participantId) {
+                    alert('Please enter your Participant ID first.');
+                    return;
+                }
+                hasStarted = true;
+                document.getElementById('participantSection').style.display = 'none';
+            }
+
             playBtn.disabled = true;
             status.textContent = '⏳ Processing...';
+
+            trials[currentTrial].playbackCount++;
 
             try {
                 const response = await fetch('/adjust', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        filename: null,
-                        gender: genderSlider.value,
+                        filename: scenarios[currentTrial].audio,
                         pitch: pitchSlider.value,
                         speed: speedSlider.value
                     })
                 });
 
                 const data = await response.json();
-                adjustedFilename = data.output;
-
-                currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
+                currentAudio = new Audio(`/play/${data.output}?t=${Date.now()}`);
                 
-                // When playback ends
                 currentAudio.addEventListener('ended', () => {
                     playBtn.disabled = false;
                     stopBtn.disabled = true;
                     status.textContent = '✔︎ Finished';
                 });
 
-                // Start playback
                 await currentAudio.play();
-                
-                // Enable Stop button
                 stopBtn.disabled = false;
-
                 status.textContent = '▶︎ Playing...';
                 
             } catch (error) {
@@ -301,62 +413,87 @@
                 currentAudio.currentTime = 0;
                 currentAudio = null;
             }
-            
             playBtn.disabled = false;
             stopBtn.disabled = true;
             status.textContent = '◼︎ Stopped';
         });
 
-        // Submit button - CSV save
-        submitBtn.addEventListener('click', () => {
-            // Block if already submitted
-            if (hasSubmitted) {
-                alert('You have already submitted. You can only submit once.');
+        // Next button
+        nextBtn.addEventListener('click', () => {
+            if (!hasStarted) {
+                alert('Please start by playing the audio first.');
                 return;
             }
 
-            // Confirmation message
-            const confirmSubmit = confirm('You cannot cancel after submission. Are you sure you want to submit?');
+            // Save current trial data
+            trials[currentTrial].finalPitch = parseInt(pitchSlider.value);
+            trials[currentTrial].finalSpeed = parseFloat(speedSlider.value);
+
+            if (currentTrial < scenarios.length - 1) {
+                currentTrial++;
+                loadScenario();
+            } else {
+                // Last trial - show submit button
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+                status.textContent = '✔︎ All trials completed! Click Submit to send your data.';
+            }
+        });
+
+        // Submit All Data
+        submitBtn.addEventListener('click', async () => {
+            const participantId = document.getElementById('participantId').value.trim();
             
-            if (!confirmSubmit) {
-                return; // Cancel - do nothing
+            if (!confirm('You cannot modify after submission. Submit now?')) {
+                return;
             }
 
-            // Get current slider values
-            const currentGender = genderSlider.value;
-            const currentPitch = pitchSlider.value;
-            const currentSpeed = speedSlider.value;
-            const timestamp = new Date().toISOString();
-            
-            // Create CSV data
-            const headers = ['Timestamp', 'Gender', 'Pitch', 'Speed'];
-            const values = [timestamp, currentGender, currentPitch, currentSpeed];
-            
-            // Add UTF-8 BOM (prevents Excel encoding issues)
-            const csvContent = '\uFEFF' + headers.join(',') + '\n' + values.join(',');
-            
-            // Create CSV file as Blob
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            // Create download link and click
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `voice_data_${Date.now()}.csv`;
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Release URL memory
-            URL.revokeObjectURL(url);
-            
-            // Mark as submitted
-            hasSubmitted = true;
-            submitBtn.disabled = true;
-            status.textContent = '✔︎ Data submitted';
+            const allData = trials.map((trial, index) => ({
+                participant_id: participantId,
+                trial_number: index + 1,
+                scenario: trial.scenario,
+                initial_pitch: trial.initialPitch,
+                initial_speed: trial.initialSpeed,
+                final_pitch: trial.finalPitch,
+                final_speed: trial.finalSpeed,
+                playback_count: trial.playbackCount,
+                adjustment_count: trial.adjustmentCount,
+                timestamp: new Date().toISOString()
+            }));
+
+            try {
+                // Save to Railway server
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trials: allData })
+                });
+
+                if (response.ok) {
+                    // Send data to Gorilla via postMessage
+                    if (window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'voiceAdjustmentComplete',
+                            participant_id: participantId,
+                            trial_count: allData.length,
+                            data: allData
+                        }, '*');
+                    }
+                    
+                    status.textContent = '✔︎ Data submitted successfully!';
+                    submitBtn.disabled = true;
+                } else {
+                    alert('Error saving data. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting data. Please try again.');
+            }
         });
+
+        // Initialize on load
+        initializeTrials();
+        loadScenario();
     </script>
 </body>
 </html>
