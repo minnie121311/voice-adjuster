@@ -418,11 +418,95 @@
         });
 
         // Submit button
-        submitBtn.addEventListener('click', async () => {
-            if (trialSubmitted[currentTrial]) {
-                alert('This trial has already been submitted.');
-                return;
+submitBtn.addEventListener('click', async () => {
+    if (trialSubmitted[currentTrial]) {
+        alert('This trial has already been submitted.');
+        return;
+    }
+
+    if (!confirm('Warning: You cannot change your adjustments after submission.\n\nAre you sure you want to submit?')) {
+        return;
+    }
+
+    const dataToSave = {
+        trial_number: currentTrial + 1,
+        message_type: scenarios[currentTrial].type,
+        gender: parseInt(genderSlider.value),
+        pitch: parseInt(pitchSlider.value),
+        speed: parseFloat(speedSlider.value),
+        timestamp: new Date().toISOString()
+    };
+
+    // 먼저 Gorilla로 데이터 전송 (Railway 저장 전에!)
+    console.log('Sending to Gorilla parent:', dataToSave);
+    
+    if (window.parent && window.parent !== window) {
+        try {
+            window.parent.postMessage({
+                type: 'voiceAdjustmentTrial',
+                trial_number: currentTrial + 1,
+                message_type: scenarios[currentTrial].type,
+                gender: parseInt(genderSlider.value),
+                pitch: parseInt(pitchSlider.value),
+                speed: parseFloat(speedSlider.value),
+                timestamp: dataToSave.timestamp
+            }, '*');
+            console.log('Data sent to Gorilla successfully');
+        } catch (e) {
+            console.error('Error sending to Gorilla:', e);
+        }
+    } else {
+        console.warn('Not in iframe - cannot send to Gorilla');
+    }
+
+    try {
+        // Railway 서버에 저장
+        const response = await fetch('/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSave)
+        });
+
+        if (response.ok) {
+            trialSubmitted[currentTrial] = true;
+            submitBtn.disabled = true;
+            status.textContent = '✔︎ Submitted!';
+
+            // Check if all trials completed
+            if (trialSubmitted.every(submitted => submitted)) {
+                console.log('ALL TRIALS COMPLETED!');
+                completionMessage.classList.add('active');
+                
+                // 최종 완료 메시지 전송
+                if (window.parent && window.parent !== window) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'voiceAdjustmentComplete',
+                            all_trials_completed: true,
+                            trial_order: trialOrder
+                        }, '*');
+                        console.log('Completion message sent to Gorilla');
+                    } catch (e) {
+                        console.error('Error sending completion to Gorilla:', e);
+                    }
+                } else {
+                    console.warn('Not in iframe - completion message not sent');
+                }
+            } else {
+                setTimeout(() => {
+                    currentTrial++;
+                    loadScenario();
+                }, 1500);
             }
+        } else {
+            alert('Error saving data. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error submitting data. Please try again.');
+    }
+});
+
 
             // 확인 알러트
             if (!confirm('Warning: You cannot change your adjustments after submission.\n\nAre you sure you want to submit?')) {
