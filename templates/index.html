@@ -175,18 +175,6 @@
             font-size: 14px;
             min-height: 25px;
         }
-        .visualization {
-            margin-top: 30px;
-            display: none;
-        }
-        .visualization.active {
-            display: block;
-        }
-        .visualization img {
-            width: 100%;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
-        }
         .completion-message {
             display: none;
             text-align: center;
@@ -254,8 +242,6 @@
             <button class="btn-submit" id="submitBtn">✔︎ Submit</button>
         </div>
 
-    
-
         <div class="status" id="status"></div>
         
         <div class="completion-message" id="completionMessage">
@@ -265,23 +251,12 @@
     </div>
 
     <script>
-        // 원본 시나리오
         const scenariosOriginal = [
-            {
-                audio: "negative.wav",
-                type: "negative"
-            },
-            {
-                audio: "positive.wav",
-                type: "positive"
-            },
-            {
-                audio: "informational.wav",
-                type: "informational"
-            }
+            { audio: "negative.wav", type: "negative" },
+            { audio: "positive.wav", type: "positive" },
+            { audio: "informational.wav", type: "informational" }
         ];
 
-        // Shuffle function (Fisher-Yates)
         function shuffleArray(array) {
             const shuffled = [...array];
             for (let i = shuffled.length - 1; i > 0; i--) {
@@ -291,7 +266,6 @@
             return shuffled;
         }
 
-        // 랜덤 순서로 시나리오 설정
         const scenarios = shuffleArray(scenariosOriginal);
         const trialOrder = scenarios.map(s => s.type);
 
@@ -314,50 +288,38 @@
         const trialInfo = document.getElementById('trialInfo');
         const completionMessage = document.getElementById('completionMessage');
 
-        // Load scenario
         function loadScenario() {
             trialInfo.textContent = `Trial ${currentTrial + 1} of 3`;
             progressBar.style.width = `${((currentTrial + 1) / 3) * 100}%`;
-
-            // Reset sliders
+            
             genderSlider.value = 0;
             pitchSlider.value = 0;
             speedSlider.value = 1.0;
             genderValue.textContent = 'Neutral (0)';
             pitchValue.textContent = '0 Hz';
             speedValue.textContent = '1.0x';
-
-            // Reset buttons
+            
             submitBtn.disabled = trialSubmitted[currentTrial];
             status.textContent = trialSubmitted[currentTrial] ? '✔︎ Already submitted' : '';
-    
         }
 
-        // Gender slider
         genderSlider.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             let label;
-            if (value < 0) {
-                label = `Masculine (${value})`;
-            } else if (value > 0) {
-                label = `Feminine (+${value})`;
-            } else {
-                label = 'Neutral (0)';
-            }
+            if (value < 0) label = `Masculine (${value})`;
+            else if (value > 0) label = `Feminine (+${value})`;
+            else label = 'Neutral (0)';
             genderValue.textContent = label;
         });
 
-        // Pitch slider
         pitchSlider.addEventListener('input', (e) => {
             pitchValue.textContent = e.target.value + ' Hz';
         });
 
-        // Speed slider
         speedSlider.addEventListener('input', (e) => {
             speedValue.textContent = e.target.value + 'x';
         });
 
-        // Play button
         playBtn.addEventListener('click', async () => {
             playBtn.disabled = true;
             status.textContent = 'Processing...';
@@ -375,13 +337,9 @@
                 });
 
                 const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
                 
                 adjustedFilename = data.output;
-
                 currentAudio = new Audio(`/play/${adjustedFilename}?t=${Date.now()}`);
                 
                 currentAudio.addEventListener('ended', () => {
@@ -392,9 +350,6 @@
 
                 await currentAudio.play();
                 stopBtn.disabled = false;
-
-            
-
                 status.textContent = '▶︎ Playing...';
                 
             } catch (error) {
@@ -405,7 +360,6 @@
             }
         });
 
-        // Stop button
         stopBtn.addEventListener('click', () => {
             if (currentAudio) {
                 currentAudio.pause();
@@ -417,98 +371,12 @@
             status.textContent = '◼︎ Stopped';
         });
 
-        // Submit button
-submitBtn.addEventListener('click', async () => {
-    if (trialSubmitted[currentTrial]) {
-        alert('This trial has already been submitted.');
-        return;
-    }
-
-    if (!confirm('Warning: You cannot change your adjustments after submission.\n\nAre you sure you want to submit?')) {
-        return;
-    }
-
-    const dataToSave = {
-        trial_number: currentTrial + 1,
-        message_type: scenarios[currentTrial].type,
-        gender: parseInt(genderSlider.value),
-        pitch: parseInt(pitchSlider.value),
-        speed: parseFloat(speedSlider.value),
-        timestamp: new Date().toISOString()
-    };
-
-    // 먼저 Gorilla로 데이터 전송 (Railway 저장 전에!)
-    console.log('Sending to Gorilla parent:', dataToSave);
-    
-    if (window.parent && window.parent !== window) {
-        try {
-            window.parent.postMessage({
-                type: 'voiceAdjustmentTrial',
-                trial_number: currentTrial + 1,
-                message_type: scenarios[currentTrial].type,
-                gender: parseInt(genderSlider.value),
-                pitch: parseInt(pitchSlider.value),
-                speed: parseFloat(speedSlider.value),
-                timestamp: dataToSave.timestamp
-            }, '*');
-            console.log('Data sent to Gorilla successfully');
-        } catch (e) {
-            console.error('Error sending to Gorilla:', e);
-        }
-    } else {
-        console.warn('Not in iframe - cannot send to Gorilla');
-    }
-
-    try {
-        // Railway 서버에 저장
-        const response = await fetch('/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToSave)
-        });
-
-        if (response.ok) {
-            trialSubmitted[currentTrial] = true;
-            submitBtn.disabled = true;
-            status.textContent = '✔︎ Submitted!';
-
-            // Check if all trials completed
-            if (trialSubmitted.every(submitted => submitted)) {
-                console.log('ALL TRIALS COMPLETED!');
-                completionMessage.classList.add('active');
-                
-                // 최종 완료 메시지 전송
-                if (window.parent && window.parent !== window) {
-                    try {
-                        window.parent.postMessage({
-                            type: 'voiceAdjustmentComplete',
-                            all_trials_completed: true,
-                            trial_order: trialOrder
-                        }, '*');
-                        console.log('Completion message sent to Gorilla');
-                    } catch (e) {
-                        console.error('Error sending completion to Gorilla:', e);
-                    }
-                } else {
-                    console.warn('Not in iframe - completion message not sent');
-                }
-            } else {
-                setTimeout(() => {
-                    currentTrial++;
-                    loadScenario();
-                }, 1500);
+        submitBtn.addEventListener('click', async () => {
+            if (trialSubmitted[currentTrial]) {
+                alert('This trial has already been submitted.');
+                return;
             }
-        } else {
-            alert('Error saving data. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error submitting data. Please try again.');
-    }
-});
 
-
-            // 확인 알러트
             if (!confirm('Warning: You cannot change your adjustments after submission.\n\nAre you sure you want to submit?')) {
                 return;
             }
@@ -522,8 +390,28 @@ submitBtn.addEventListener('click', async () => {
                 timestamp: new Date().toISOString()
             };
 
+            console.log('Sending to Gorilla parent:', dataToSave);
+            
+            if (window.parent && window.parent !== window) {
+                try {
+                    window.parent.postMessage({
+                        type: 'voiceAdjustmentTrial',
+                        trial_number: currentTrial + 1,
+                        message_type: scenarios[currentTrial].type,
+                        gender: parseInt(genderSlider.value),
+                        pitch: parseInt(pitchSlider.value),
+                        speed: parseFloat(speedSlider.value),
+                        timestamp: dataToSave.timestamp
+                    }, '*');
+                    console.log('Data sent to Gorilla successfully');
+                } catch (e) {
+                    console.error('Error sending to Gorilla:', e);
+                }
+            } else {
+                console.warn('Not in iframe - cannot send to Gorilla');
+            }
+
             try {
-                // Railway 서버에 저장
                 const response = await fetch('/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -531,33 +419,27 @@ submitBtn.addEventListener('click', async () => {
                 });
 
                 if (response.ok) {
-                    // Gorilla로 데이터 전송
-                    if (window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'voiceAdjustmentTrial',
-                            trial_number: currentTrial + 1,
-                            message_type: scenarios[currentTrial].type,
-                            gender: parseInt(genderSlider.value),
-                            pitch: parseInt(pitchSlider.value),
-                            speed: parseFloat(speedSlider.value),
-                            timestamp: dataToSave.timestamp
-                        }, '*');
-                    }
-                    
                     trialSubmitted[currentTrial] = true;
                     submitBtn.disabled = true;
                     status.textContent = '✔︎ Submitted!';
 
-                    // Check if all trials completed
                     if (trialSubmitted.every(submitted => submitted)) {
+                        console.log('ALL TRIALS COMPLETED!');
                         completionMessage.classList.add('active');
                         
-                        if (window.parent !== window) {
-                            window.parent.postMessage({
-                                type: 'voiceAdjustmentComplete',
-                                all_trials_completed: true,
-                                trial_order: trialOrder
-                            }, '*');
+                        if (window.parent && window.parent !== window) {
+                            try {
+                                window.parent.postMessage({
+                                    type: 'voiceAdjustmentComplete',
+                                    all_trials_completed: true,
+                                    trial_order: trialOrder
+                                }, '*');
+                                console.log('Completion message sent to Gorilla');
+                            } catch (e) {
+                                console.error('Error sending completion to Gorilla:', e);
+                            }
+                        } else {
+                            console.warn('Not in iframe - completion message not sent');
                         }
                     } else {
                         setTimeout(() => {
@@ -574,7 +456,6 @@ submitBtn.addEventListener('click', async () => {
             }
         });
 
-        // Initialize
         console.log('Trial order:', trialOrder);
         loadScenario();
     </script>
