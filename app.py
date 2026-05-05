@@ -6,13 +6,10 @@ from datetime import datetime
 import random
 import parselmouth
 from parselmouth.praat import call
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
 import io
 import threading
+import base64
+import requests
 try:
     import openpyxl
     from openpyxl import Workbook
@@ -203,46 +200,43 @@ def submit_phase1():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+def send_email_resend(to, subject, body, attachment_bytes=None, attachment_name=None):
+    api_key = os.environ.get('RESEND_API_KEY')
+    if not api_key:
+        print('RESEND_API_KEY not set')
+        return False
+    payload = {
+        'from': 'Voice Study <onboarding@resend.dev>',
+        'to': [to],
+        'subject': subject,
+        'text': body
+    }
+    if attachment_bytes and attachment_name:
+        payload['attachments'] = [{
+            'filename': attachment_name,
+            'content': base64.b64encode(attachment_bytes).decode()
+        }]
+    resp = requests.post(
+        'https://api.resend.com/emails',
+        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+        json=payload,
+        timeout=15
+    )
+    print(f'Resend response: {resp.status_code} {resp.text}')
+    return resp.status_code == 200
+
+
 def send_phase1_email(participant_id, response_count):
     try:
         print(f"Sending Phase 1 email for: {participant_id}")
-
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_EMAIL
-        msg['To'] = RESEARCHER_EMAIL
-        msg['Subject'] = f'Voice Study - Phase 1 Complete - {participant_id}'
-
-        body = f'''
-A participant has completed Phase 1 (Voice Evaluation).
+        body = f'''A participant has completed Phase 1 (Voice Evaluation).
 
 Participant ID: {participant_id}
-Session ID: {session.get('study_session_id', 'N/A')}
 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Responses: {response_count} audio evaluations
 
-Data will be included in final Excel file after Phase 2 completion.
-        '''
-
-        msg.attach(MIMEText(body, 'plain'))
-
-        if SMTP_EMAIL and SMTP_PASSWORD:
-            sent = False
-            for port, use_ssl in [(587, False), (465, True)]:
-                try:
-                    if use_ssl:
-                        server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
-                    else:
-                        server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
-                        server.starttls()
-                    server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                    server.send_message(msg)
-                    server.quit()
-                    print(f"✓ Phase 1 email sent to {RESEARCHER_EMAIL} via port {port}")
-                    sent = True
-                    break
-                except Exception as port_err:
-                    print(f"Port {port} failed: {port_err}")
-
+Data will be included in final Excel file after Phase 2 completion.'''
+        send_email_resend(RESEARCHER_EMAIL, f'Voice Study - Phase 1 Complete - {participant_id}', body)
     except Exception as e:
         print(f"Phase 1 email error: {str(e)}")
 
@@ -456,57 +450,28 @@ def send_complete_excel(session_id):
         excel_path = os.path.join(DATA_DIR, excel_filename)
         wb.save(excel_path)
 
-        # Send email
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_EMAIL
-        msg['To'] = RESEARCHER_EMAIL
-        msg['Subject'] = f'Voice Study - COMPLETE - {session_id}'
-
-        body = f'''
-A participant has completed the entire study!
+        body = f'''A participant has completed the entire study!
 
 Session ID: {session_id}
 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 Complete data is attached as Excel file with tabs:
-- Summary
-- Consent
-- LSAS
-- Phase 1 (36 voice evaluations)
-- Phase 2 (9 voice adjustments)
-        '''
+- Summary / Consent / LSAS / Phase 1 (36 evaluations) / Phase 2 (9 adjustments)'''
 
-        msg.attach(MIMEText(body, 'plain'))
-
-        # Attach Excel
         with open(excel_path, 'rb') as f:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(f.read())
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f'attachment; filename={excel_filename}')
-            msg.attach(part)
+            excel_bytes = f.read()
 
-        if SMTP_EMAIL and SMTP_PASSWORD:
-            sent = False
-            last_err = None
-            for port, use_ssl in [(587, False), (465, True)]:
-                try:
-                    if use_ssl:
-                        server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
-                    else:
-                        server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
-                        server.starttls()
-                    server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                    server.send_message(msg)
-                    server.quit()
-                    print(f"✓ Excel file sent to {RESEARCHER_EMAIL} via port {port}")
-                    sent = True
-                    break
-                except Exception as port_err:
-                    last_err = port_err
-                    print(f"Port {port} failed: {port_err}")
-            if not sent:
-                raise last_err
+        ok = send_email_resend(
+            RESEARCHER_EMAIL,
+            f'Voice Study - COMPLETE - {session_id}',
+            body,
+            attachment_bytes=excel_bytes,
+            attachment_name=excel_filename
+        )
+        if ok:
+            print(f"✓ Excel email sent to {RESEARCHER_EMAIL}")
+        else:
+            print("Excel email failed via Resend")
 
     except Exception as e:
         print(f"Excel email error: {str(e)}")
@@ -521,29 +486,12 @@ def test_email():
     if admin_key != 'ucl-voice-study-2026':
         return jsonify({'error': 'Unauthorized'}), 403
 
-    results = []
-    for port, use_ssl in [(587, False), (465, True)]:
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = SMTP_EMAIL
-            msg['To'] = RESEARCHER_EMAIL
-            msg['Subject'] = 'Voice Study - Email Test'
-            msg.attach(MIMEText(f'Test email from Railway via port {port}', 'plain'))
-
-            if use_ssl:
-                server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
-            else:
-                server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
-                server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
-            results.append({'port': port, 'status': 'success'})
-            break
-        except Exception as e:
-            results.append({'port': port, 'status': 'failed', 'error': str(e)})
-
-    return jsonify({'results': results})
+    ok = send_email_resend(
+        RESEARCHER_EMAIL,
+        'Voice Study - Email Test',
+        f'Test email from Railway at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+    )
+    return jsonify({'status': 'success' if ok else 'failed'})
 
 
 @app.route('/admin/csv-status')
