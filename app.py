@@ -107,6 +107,18 @@ def submit_consent():
         return jsonify({'error': str(e)}), 500
 
 
+
+@app.route('/personal-info')
+def personal_info():
+    return render_template('personal_info.html')
+
+@app.route('/submit-personal-info', methods=['POST'])
+def submit_personal_info():
+    try:
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/lsas')
 def lsas():
     return render_template('lsas.html')
@@ -432,11 +444,35 @@ def send_complete_excel(session_id):
         ws_lsas = wb.create_sheet("LSAS")
         ws_lsas.append(['Session ID', 'Timestamp', 'Fear Score', 'Avoidance Score', 'Total Score'])
 
+        # --- Phase 1: wide format (filenames as columns) ---
+        phase1_data = [r for r in participant_data if r[2] == 'phase1']
+        phase1_data.sort(key=lambda r: r[8])
         ws_phase1 = wb.create_sheet("Phase 1")
-        ws_phase1.append(['Session ID', 'Timestamp', 'Audio File', 'Trustworthiness', 'Anxiety', 'Preference', 'Dominance', 'Warmth', 'Listen Time'])
+        p1_header = ['Session ID']
+        for r in phase1_data:
+            fname = r[8].replace('.mp3', '')
+            for m in ['trust', 'anxiety', 'pref', 'dom', 'warmth']:
+                p1_header.append(f'{fname}_{m}')
+        ws_phase1.append(p1_header)
+        p1_row = [session_id]
+        for r in phase1_data:
+            p1_row.extend([r[9], r[10], r[11], r[12], r[13]])
+        ws_phase1.append(p1_row)
 
+        # --- Phase 2: wide format (folder names as columns) ---
+        phase2_data = [r for r in participant_data if r[2] == 'phase2']
+        phase2_data.sort(key=lambda r: r[15])
         ws_phase2 = wb.create_sheet("Phase 2")
-        ws_phase2.append(['Session ID', 'Timestamp', 'Folder', 'Formant', 'Pitch'])
+        p2_header = ['Session ID']
+        for r in phase2_data:
+            folder = r[15]
+            p2_header.append(f'{folder}_formant')
+            p2_header.append(f'{folder}_pitch')
+        ws_phase2.append(p2_header)
+        p2_row = [session_id]
+        for r in phase2_data:
+            p2_row.extend([r[16], r[17]])
+        ws_phase2.append(p2_row)
 
         for row in participant_data:
             data_type = row[2]
@@ -444,10 +480,6 @@ def send_complete_excel(session_id):
                 ws_consent.append([row[0], row[1], row[3], row[4]])
             elif data_type == 'lsas':
                 ws_lsas.append([row[0], row[1], row[5], row[6], row[7]])
-            elif data_type == 'phase1':
-                ws_phase1.append([row[0], row[1], row[8], row[9], row[10], row[11], row[12], row[13], row[14]])
-            elif data_type == 'phase2':
-                ws_phase2.append([row[0], row[1], row[15], row[16], row[17]])
 
         # Save Excel
         excel_filename = f'study_data_{session_id}.xlsx'
@@ -557,24 +589,84 @@ def download_excel():
     try:
         wb = Workbook()
 
-        # Sheet 1: All participant data (CSV)
-        ws1 = wb.active
-        ws1.title = 'All Data'
+        # Read all CSV data
+        all_rows = []
         if os.path.exists(ALL_DATA_CSV):
             with open(ALL_DATA_CSV, 'r', encoding='utf-8') as f:
-                for row in csv.reader(f):
-                    ws1.append(row)
-        else:
-            ws1.append(['No data collected yet'])
+                reader = csv.reader(f)
+                header = next(reader, None)
+                all_rows = list(reader)
 
-        # Sheet 2: Phase 2 data
-        ws2 = wb.create_sheet('Phase2')
-        if os.path.exists(PHASE2_CSV):
-            with open(PHASE2_CSV, 'r', encoding='utf-8') as f:
-                for row in csv.reader(f):
-                    ws2.append(row)
-        else:
-            ws2.append(['No phase 2 data yet'])
+        # Group by session
+        from collections import defaultdict, OrderedDict
+        sessions = OrderedDict()
+        for row in all_rows:
+            sid = row[0]
+            if sid not in sessions:
+                sessions[sid] = []
+            sessions[sid].append(row)
+
+        # --- Sheet 1: Phase 1 wide (all participants) ---
+        ws1 = wb.active
+        ws1.title = 'Phase 1'
+        # Collect all unique filenames across all sessions
+        all_p1_files = []
+        seen = set()
+        for rows in sessions.values():
+            for r in sorted([x for x in rows if x[2]=='phase1'], key=lambda x: x[8]):
+                fname = r[8].replace('.mp3','')
+                if fname not in seen:
+                    seen.add(fname)
+                    all_p1_files.append(fname)
+        p1_header = ['Session ID']
+        for fname in all_p1_files:
+            for m in ['trust','anxiety','pref','dom','warmth']:
+                p1_header.append(f'{fname}_{m}')
+        ws1.append(p1_header)
+        for sid, rows in sessions.items():
+            p1_map = {r[8].replace('.mp3',''): r for r in rows if r[2]=='phase1'}
+            row_data = [sid]
+            for fname in all_p1_files:
+                if fname in p1_map:
+                    r = p1_map[fname]
+                    row_data.extend([r[9],r[10],r[11],r[12],r[13]])
+                else:
+                    row_data.extend(['','','','',''])
+            ws1.append(row_data)
+
+        # --- Sheet 2: Phase 2 wide (all participants) ---
+        ws2 = wb.create_sheet('Phase 2')
+        all_p2_folders = []
+        seen2 = set()
+        for rows in sessions.values():
+            for r in sorted([x for x in rows if x[2]=='phase2'], key=lambda x: x[15]):
+                folder = r[15]
+                if folder not in seen2:
+                    seen2.add(folder)
+                    all_p2_folders.append(folder)
+        p2_header = ['Session ID']
+        for folder in all_p2_folders:
+            p2_header.append(f'{folder}_formant')
+            p2_header.append(f'{folder}_pitch')
+        ws2.append(p2_header)
+        for sid, rows in sessions.items():
+            p2_map = {r[15]: r for r in rows if r[2]=='phase2'}
+            row_data = [sid]
+            for folder in all_p2_folders:
+                if folder in p2_map:
+                    r = p2_map[folder]
+                    row_data.extend([r[16],r[17]])
+                else:
+                    row_data.extend(['',''])
+            ws2.append(row_data)
+
+        # --- Sheet 3: LSAS ---
+        ws3 = wb.create_sheet('LSAS')
+        ws3.append(['Session ID','Timestamp','Fear Score','Avoidance Score','Total Score'])
+        for rows in sessions.values():
+            for r in rows:
+                if r[2]=='lsas':
+                    ws3.append([r[0],r[1],r[5],r[6],r[7]])
 
         output = io.BytesIO()
         wb.save(output)

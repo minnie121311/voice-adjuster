@@ -216,7 +216,7 @@
                 const response = await fetch('/submit-consent', { method: 'POST' });
                 const data = await response.json();
                 if (data.success) {
-                    window.location.href = '/lsas';  // 다음: LSAS 테스트
+                    window.location.href = '/personal-info';
                 }
             } catch (error) {
                 alert('Error: ' + error.message);

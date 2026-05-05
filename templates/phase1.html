@@ -462,23 +462,23 @@
             audioPlayer.load();
             audioPlayer.play();
 
-            // 청취 시간 초기화
+            // 청취 완료 초기화
             listenTime = 0;
             hasListenedEnough = false;
             updateListenTimer();
 
-            // 청취 시간 카운트
+            // 오디오 끝까지 들어야 활성화
             clearInterval(listenInterval);
             listenInterval = setInterval(() => {
                 if (!audioPlayer.paused) {
                     listenTime++;
-                    updateListenTimer();
-                    if (listenTime >= 5 && !hasListenedEnough) {
-                        hasListenedEnough = true;
-                        updateListenTimer();
-                    }
                 }
             }, 1000);
+
+            audioPlayer.onended = function() {
+                hasListenedEnough = true;
+                updateListenTimer();
+            };
 
             updateProgress();
             loadPreviousResponses();
@@ -488,10 +488,10 @@
         function updateListenTimer() {
             const timer = document.getElementById('listenTimer');
             if (hasListenedEnough) {
-                timer.textContent = '✓ You may now proceed';
+                timer.textContent = '✓ Audio complete — you may now proceed';
                 timer.className = 'listen-timer completed';
             } else {
-                timer.textContent = `⏱ Please listen for at least ${5 - listenTime} more seconds...`;
+                timer.textContent = '⏱ Please listen to the full audio before proceeding';
                 timer.className = 'listen-timer';
             }
         }
@@ -558,7 +558,7 @@
             document.getElementById('errorMessage').textContent = '';
 
             if (!hasListenedEnough) {
-                document.getElementById('errorMessage').textContent = 'Please listen to the audio for at least 5 seconds before proceeding.';
+                document.getElementById('errorMessage').textContent = 'Please listen to the full audio before proceeding.';
                 return;
             }
 

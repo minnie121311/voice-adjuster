@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .ucl-logo { position: fixed; top: 20px; left: 20px; z-index: 1000; }
+        .ucl-logo img { height: 60px; width: auto; }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 50px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; text-align: center; }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+        .section {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .field-row.single { grid-template-columns: 1fr; }
+        .field-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 13px; font-weight: 500; color: #555; }
+        input[type="text"], input[type="number"], select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+            background: white;
+            width: 100%;
+        }
+        input:focus, select:focus { outline: none; border-color: #999; }
+        .radio-group { display: flex; gap: 20px; flex-wrap: wrap; padding-top: 4px; }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .placeholder-note {
+            text-align: center;
+            color: #bbb;
+            font-size: 13px;
+            font-style: italic;
+            padding: 20px 0;
+        }
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 36px;
+        }
+        .btn-back {
+            padding: 14px 28px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #555;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-back:hover { background: #f5f5f5; }
+        .btn-next {
+            flex: 1;
+            padding: 14px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-next:hover { background: #111; }
+    </style>
+</head>
+<body>
+    <div class="ucl-logo">
+        <img src="/static/ucl_logo.png" alt="UCL Logo">
+    </div>
+
+    <div class="container">
+        <h1>Personal Information</h1>
+        <p class="subtitle">Please fill in the following information before proceeding.</p>
+
+        <form id="personalInfoForm">
+
+            <!-- Section 1: Placeholder -->
+            <div class="section">
+                <div class="section-title">Section 1</div>
+                <div class="placeholder-note">Content to be added</div>
+            </div>
+
+            <!-- Section 2: Placeholder -->
+            <div class="section">
+                <div class="section-title">Section 2</div>
+                <div class="placeholder-note">Content to be added</div>
+            </div>
+
+            <!-- Section 3: Placeholder -->
+            <div class="section">
+                <div class="section-title">Section 3</div>
+                <div class="placeholder-note">Content to be added</div>
+            </div>
+
+        </form>
+
+        <div class="buttons">
+            <button class="btn-back" onclick="history.back()">Back</button>
+            <button class="btn-next" onclick="submitForm()">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        async function submitForm() {
+            try {
+                const response = await fetch('/submit-personal-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = '/lsas';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+
+<!-- Issue Report Widget -->
+<div onclick="document.getElementById('issueModal').style.display='flex'" style="position:fixed;bottom:20px;right:20px;background:#555;color:white;padding:10px 16px;border-radius:20px;cursor:pointer;font-size:13px;font-family:-apple-system,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.25);z-index:9999;">⚠ Something wrong with this page?</div>
+<div id="issueModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:10000;">
+  <div style="background:white;border-radius:8px;padding:30px;max-width:400px;width:90%;font-family:-apple-system,sans-serif;">
+    <h3 style="margin:0 0 15px;font-size:16px;color:#333;">Report an issue</h3>
+    <textarea id="issueText" placeholder="Please describe the problem..." style="width:100%;height:100px;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+    <div style="display:flex;gap:10px;margin-top:15px;">
+      <button onclick="submitIssue()" style="flex:1;padding:10px;background:#555;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Send Report</button>
+      <button onclick="document.getElementById('issueModal').style.display='none'" style="flex:1;padding:10px;background:#e0e0e0;color:#333;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+    </div>
+    <div id="issueStatus" style="margin-top:10px;font-size:13px;text-align:center;color:#666;"></div>
+  </div>
+</div>
+<script>
+async function submitIssue() {
+  const msg = document.getElementById('issueText').value.trim();
+  if (!msg) return;
+  document.getElementById('issueStatus').textContent = 'Sending...';
+  try {
+    const resp = await fetch('/report-issue', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg, page: window.location.pathname})
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById('issueStatus').textContent = 'Report sent. Thank you!';
+      document.getElementById('issueText').value = '';
+      setTimeout(() => {
+        document.getElementById('issueModal').style.display = 'none';
+        document.getElementById('issueStatus').textContent = '';
+      }, 2000);
+    } else {
+      document.getElementById('issueStatus').textContent = 'Failed to send. Please try again.';
+    }
+  } catch(e) {
+    document.getElementById('issueStatus').textContent = 'Error: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
