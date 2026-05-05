@@ -202,7 +202,7 @@ def submit_phase1():
 
 def send_email_resend(to, subject, body, attachment_bytes=None, attachment_name=None):
     try:
-        api_key = os.environ.get('RESEND_API_KEY')
+        api_key = os.environ.get('RESEND_API_KEY', '').strip()
         if not api_key:
             print('RESEND_API_KEY not set')
             return False, 'RESEND_API_KEY not set'
