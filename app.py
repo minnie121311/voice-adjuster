@@ -544,6 +544,48 @@ def download_csv():
 
 
 
+
+@app.route('/admin/download-excel')
+def download_excel():
+    admin_key = request.args.get('key')
+    if admin_key != 'ucl-voice-study-2026':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if not EXCEL_AVAILABLE:
+        return jsonify({'error': 'openpyxl not installed'}), 500
+
+    try:
+        wb = Workbook()
+
+        # Sheet 1: All participant data (CSV)
+        ws1 = wb.active
+        ws1.title = 'All Data'
+        if os.path.exists(ALL_DATA_CSV):
+            with open(ALL_DATA_CSV, 'r', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    ws1.append(row)
+        else:
+            ws1.append(['No data collected yet'])
+
+        # Sheet 2: Phase 2 data
+        ws2 = wb.create_sheet('Phase2')
+        if os.path.exists(PHASE2_CSV):
+            with open(PHASE2_CSV, 'r', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    ws2.append(row)
+        else:
+            ws2.append(['No phase 2 data yet'])
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = f'voice_study_all_data_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        return send_file(output, as_attachment=True, download_name=filename,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/report-issue', methods=['POST'])
 def report_issue():
     data = request.get_json()
