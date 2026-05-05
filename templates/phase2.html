@@ -393,7 +393,7 @@
             clearTimeout(autoPlayTimer);
             if (!hasPlayedAudio) return;
             status.textContent = 'Updating...';
-            autoPlayTimer = setTimeout(() => { playBtn.click(); }, 300);
+            autoPlayTimer = setTimeout(() => { playAudio(); }, 300);
         }
 
         formantSlider.addEventListener('input', (e) => {
@@ -419,7 +419,7 @@
             status.textContent = 'Reset';
         });
 
-        playBtn.addEventListener('click', async () => {
+        async function playAudio() {
             playBtn.disabled = true;
             status.textContent = 'Processing...';
 
@@ -461,7 +461,6 @@
 
                 await currentAudio.play();
 
-                // 🔥 Enable submit after playing
                 hasPlayedAudio = true;
                 submitBtn.disabled = false;
                 playWarning.classList.remove('show');
@@ -474,7 +473,9 @@
                 stopBtn.disabled = true;
                 status.textContent = 'Error: ' + error.message;
             }
-        });
+        }
+
+        playBtn.addEventListener('click', playAudio);
 
         stopBtn.addEventListener('click', () => {
             if (currentAudio) {
