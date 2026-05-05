@@ -393,7 +393,7 @@
             clearTimeout(autoPlayTimer);
             if (!hasPlayedAudio) return;
             status.textContent = 'Updating...';
-            autoPlayTimer = setTimeout(() => { playBtn.click(); }, 800);
+            autoPlayTimer = setTimeout(() => { playBtn.click(); }, 300);
         }
 
         formantSlider.addEventListener('input', (e) => {
