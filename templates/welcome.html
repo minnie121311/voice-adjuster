@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Study - Information</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* UCL 로고 */
+        .ucl-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        
+        .ucl-logo img {
+            height: 60px;
+            width: auto;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 50px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+        ul {
+            margin: 15px 0 15px 30px;
+            color: #666;
+            line-height: 1.8;
+        }
+        .btn-next {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 40px auto 0;
+            transition: background 0.2s;
+        }
+        .btn-next:hover {
+            background: #1d4ed8;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 20px;
+            border-left: 4px solid #fbbf24;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- UCL 로고 -->
+    <div class="ucl-logo">
+        <img src="/static/ucl_logo.png" alt="UCL Logo">
+    </div>
+
+    <div class="container">
+        <h1>Voice Perception and Adjustment Study</h1>
+        
+        <h2>Study Information</h2>
+        
+        <p><strong>Research Team:</strong> University College London (UCL)</p>
+        <p><strong>Estimated Duration:</strong> Approximately 30-40 minutes</p>
+        
+        <h2>Purpose of the Study</h2>
+        <p>This research investigates how people perceive and prefer different voice characteristics in workplace communication scenarios. You will listen to various voice samples from simulated HR department messages and evaluate them.</p>
+        
+        <h2>What Will You Do?</h2>
+        <p>This study consists of several parts:</p>
+        <ul>
+            <li><strong>Questionnaire:</strong> Brief survey about social interaction (LSAS)</li>
+            <li><strong>Phase 1:</strong> Listen to 36 voice samples and rate them</li>
+            <li><strong>Phase 2:</strong> Adjust voice parameters to find your preferred voice tone</li>
+        </ul>
+        
+        <div class="highlight">
+            <p><strong>Important Notes:</strong></p>
+            <ul>
+                <li>Please use headphones for the best audio quality</li>
+                <li>Complete the study in a quiet environment</li>
+                <li>Your responses will be completely anonymous</li>
+                <li>You can withdraw at any time without penalty</li>
+            </ul>
+        </div>
+        
+        <h2>Data Privacy</h2>
+        <p>All data collected will be anonymized and stored securely. Your responses will be used only for research purposes and will not be shared with third parties.</p>
+        
+        <button class="btn-next" onclick="location.href='/consent'">Continue to Consent Form</button>
+    </div>
+</body>
+</html>

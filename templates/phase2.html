@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Adjustment Study - Phase 2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            height: 6px;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #666;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .trial-info {
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .instruction-box {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 30px;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        .instruction-box p {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+        .instruction-box p:last-child {
+            margin-bottom: 0;
+        }
+        .instruction-box strong {
+            color: #000;
+        }
+        .message-instruction {
+            text-align: center;
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 30px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        .control-group {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 12px;
+            color: #333;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #666;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: none;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #666;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .value-display {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 40px;
+        }
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-understand {
+            background: #666;
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+        }
+        .btn-understand:hover {
+            background: #555;
+        }
+        .btn-play {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-play:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+        .btn-stop {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-stop:not(:disabled) {
+            background: #bdbdbd;
+        }
+        .btn-stop:hover:not(:disabled) {
+            background: #a0a0a0;
+        }
+        .btn-reset {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-reset:hover:not(:disabled) {
+            background: #d0d0d0;
+        }
+        .btn-submit {
+            background: #10b981;
+            color: white;
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: #059669;
+        }
+        .btn-submit:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+        }
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+            min-height: 25px;
+        }
+        .play-warning {
+            text-align: center;
+            color: #dc2626;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 15px;
+            padding: 10px;
+            background: #fee2e2;
+            border-radius: 6px;
+            display: none;
+        }
+        .play-warning.show {
+            display: block;
+        }
+        .completion-message {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .completion-message.active {
+            display: block;
+        }
+        .completion-message h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .completion-message p {
+            color: #666;
+            font-size: 14px;
+        }
+        #startScreen {
+            display: block;
+        }
+        #mainScreen {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen">
+            <h1>Voice Adjustment Study - Phase 2</h1>
+            <div class="instruction-box">
+                <p><strong>Study Instructions</strong></p>
+                <p>You will receive <strong>calls from the HR department</strong>.</p>
+                <p>You will hear positive evaluations, negative evaluations, and informational messages.</p>
+                <p>After listening to each message, <strong>adjust the voice to what feels most comfortable to you</strong> using the sliders.</p>
+                <p><strong>⚠️ You must play the audio at least once before submitting.</strong></p>
+                <p><strong>You can only submit once per message.</strong></p>
+            </div>
+            <button class="btn-understand" onclick="startExperiment()">I Understand</button>
+        </div>
+
+        <!-- Main Experiment Screen -->
+        <div id="mainScreen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+
+            <div class="trial-info" id="trialInfo">Message 1 of 9</div>
+
+            <div class="message-instruction">
+                Listen to the message from HR department<br>
+                and adjust as much as you want
+            </div>
+
+            <div class="control-group">
+                <label for="formant">Formant</label>
+                <input type="range" id="formant" min="-5" max="5" value="0" step="1">
+                <div class="value-display" id="formantValue">0</div>
+                <div class="range-labels">
+                    <span>Deep Voice</span>
+                    <span>Neutral</span>
+                    <span>High Voice</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="pitch">Pitch (semitones)</label>
+                <input type="range" id="pitch" min="-5" max="5" value="0" step="0.5">
+                <div class="value-display" id="pitchValue">0.0 st</div>
+                <div class="range-labels">
+                    <span>-5 st</span>
+                    <span>0 st</span>
+                    <span>+5 st</span>
+                </div>
+            </div>            
+
+            <div class="buttons">
+                <button class="btn-play" id="playBtn">▶ Play</button>
+                <button class="btn-stop" id="stopBtn" disabled>■ Stop</button>
+                <button class="btn-reset" id="resetBtn">↻ Reset</button>
+                <button class="btn-submit" id="submitBtn" disabled>Submit</button>
+            </div>
+
+            <div class="play-warning" id="playWarning">
+                ⚠️ You must play the audio before submitting
+            </div>
+
+            <div class="status" id="status"></div>
+
+            <div class="completion-message" id="completionMessage">
+                <h2>Study Completed</h2>
+                <p>Thank you for your participation.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFolder = null;
+        let currentIndex = 0;
+        let totalFiles = 9;
+        let currentAudio = null;
+        let hasPlayedAudio = false; // 🔥 NEW: Track if audio was played
+
+        const formantSlider = document.getElementById('formant');
+        const pitchSlider = document.getElementById('pitch');
+        const formantValue = document.getElementById('formantValue');
+        const pitchValue = document.getElementById('pitchValue');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        const playWarning = document.getElementById('playWarning');
+        const progressBar = document.getElementById('progressBar');
+        const trialInfo = document.getElementById('trialInfo');
+        const completionMessage = document.getElementById('completionMessage');
+
+        async function startExperiment() {
+            try {
+                const response = await fetch('/start-phase2', { method: 'POST' });
+                const data = await response.json();
+
+                currentFolder = data.current_folder;
+                currentIndex = data.index;
+                totalFiles = data.total;
+
+                document.getElementById('startScreen').style.display = 'none';
+                document.getElementById('mainScreen').style.display = 'block';
+
+                updateUI();
+            } catch (error) {
+                alert('Error starting study: ' + error.message);
+            }
+        }
+
+        function updateUI() {
+            trialInfo.textContent = `Message ${currentIndex + 1} of ${totalFiles}`;
+            progressBar.style.width = `${((currentIndex + 1) / totalFiles) * 100}%`;
+
+            resetSliders();
+            hasPlayedAudio = false; // 🔥 Reset play status
+            submitBtn.disabled = true; // 🔥 Disable submit initially
+            playWarning.classList.remove('show');
+            status.textContent = '';
+        }
+
+        function resetSliders() {
+            formantSlider.value = 0;
+            pitchSlider.value = 0;
+            formantValue.textContent = '0';
+            pitchValue.textContent = '0.0 st';
+        }
+
+        formantSlider.addEventListener('input', (e) => {
+            formantValue.textContent = e.target.value;
+        });
+
+        pitchSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            pitchValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' st';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            resetSliders();
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            playBtn.disabled = false;
+            stopBtn.disabled = true;
+            status.textContent = 'Reset';
+        });
+
+        playBtn.addEventListener('click', async () => {
+            playBtn.disabled = true;
+            status.textContent = 'Processing...';
+
+            try {
+                const formant = parseInt(formantSlider.value);
+                const pitch = parseFloat(pitchSlider.value);
+
+                const response = await fetch('/adjust-voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        folder: currentFolder,
+                        formant: formant,
+                        pitch: pitch
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                }
+
+                currentAudio = new Audio(`/play/${data.output_file}?t=${Date.now()}`);
+
+                currentAudio.addEventListener('ended', () => {
+                    playBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    status.textContent = '';
+                });
+
+                currentAudio.addEventListener('error', () => {
+                    playBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    status.textContent = 'Audio error';
+                });
+
+                await currentAudio.play();
+
+                // 🔥 Enable submit after playing
+                hasPlayedAudio = true;
+                submitBtn.disabled = false;
+                playWarning.classList.remove('show');
+
+                stopBtn.disabled = false;
+                status.textContent = 'Playing...';
+
+            } catch (error) {
+                playBtn.disabled = false;
+                stopBtn.disabled = true;
+                status.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            playBtn.disabled = false;
+            stopBtn.disabled = true;
+            status.textContent = '';
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            // 🔥 Check if audio was played
+            if (!hasPlayedAudio) {
+                playWarning.classList.add('show');
+                return;
+            }
+
+            if (!confirm('You cannot change your adjustment after submission.\n\nAre you sure you want to submit?')) {
+                return;
+            }
+
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+
+            const formant = parseInt(formantSlider.value);
+            const pitch = parseFloat(pitchSlider.value);
+
+            try {
+                const response = await fetch('/submit-adjustment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        folder: currentFolder,
+                        formant: formant,
+                        pitch: pitch
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.completed) {
+                    status.textContent = '';
+                    completionMessage.classList.add('active');
+                    submitBtn.disabled = true;
+                    playBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    resetBtn.disabled = true;
+                    setTimeout(() => { window.location.href = '/thankyou'; }, 2000);
+                } else {
+                    status.textContent = 'Submitted';
+                    submitBtn.disabled = true;
+                    playBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    resetBtn.disabled = true;
+
+                    setTimeout(() => {
+                        currentFolder = data.next_folder;
+                        currentIndex = data.index;
+                        updateUI();
+                        playBtn.disabled = false;
+                        resetBtn.disabled = false;
+                    }, 1500);
+                }
+            } catch (error) {
+                alert('Error submitting: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

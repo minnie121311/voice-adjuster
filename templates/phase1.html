@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 1: Voice Evaluation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .ucl-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .ucl-logo img {
+            height: 60px;
+            width: auto;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+            margin: 80px auto 20px;
+            padding: 40px;
+        }
+
+        .instruction-page {
+            text-align: center;
+        }
+
+        .instruction-page h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .instruction-page .instruction-text {
+            background: #f9f9f9;
+            border-left: 4px solid #333;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+            line-height: 1.8;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .instruction-page .instruction-text p {
+            margin-bottom: 15px;
+        }
+
+        .instruction-page .instruction-text strong {
+            color: #333;
+        }
+
+        .btn-start {
+            background: #333;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .btn-start:hover {
+            background: #555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .evaluation-page {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #333;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .audio-player {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .audio-player p {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        /* 최소 청취 시간 알림 */
+        .listen-timer {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        .listen-timer.completed {
+            color: #2e7d32;
+        }
+
+        audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .question-block {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .question-text {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .radio-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #333;
+        }
+
+        .radio-item label {
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-prev:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-prev:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-next {
+            background: #333;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background: #555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-next:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .completion-message h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="ucl-logo">
+        <img src="/static/ucl_logo.png" alt="UCL Logo">
+    </div>
+
+    <div class="container">
+        <div class="instruction-page" id="instructionPage">
+            <h1>Phase 1: Voice Evaluation</h1>
+
+            <div class="instruction-text">
+                <p><strong>Instructions:</strong></p>
+                <p>In this phase, you will listen to voice messages from an HR representative.</p>
+                <p>You will hear <strong>negative messages, positive messages, and informational messages</strong> delivered at various pitch levels.</p>
+                <p><strong>Please listen carefully</strong> to each voice and evaluate your feelings about the speaker based on the questions provided.</p>
+                <p>There are <strong>36 voice samples</strong> in total. You can navigate back and forth between samples if needed.</p>
+                <p><strong>Note:</strong> Each audio will play automatically and you must listen for at least 5 seconds before proceeding.</p>
+            </div>
+
+            <button class="btn-start" onclick="startEvaluation()">Start Evaluation</button>
+        </div>
+
+        <div class="evaluation-page" id="evaluationPage">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Audio 1 of 36</div>
+
+            <h2>Voice Evaluation</h2>
+
+            <div class="audio-player">
+                <p>Please listen to the following audio carefully:</p>
+                <audio id="audioPlayer" controls autoplay>
+                    <source id="audioSource" src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                <div class="listen-timer" id="listenTimer">⏱ Please listen for at least 5 seconds...</div>
+            </div>
+
+            <form id="evaluationForm">
+                <div class="question-block">
+                    <div class="question-text">1. How much do you trust this speaker?</div>
+                    <div class="scale-labels">
+                        <span>1 = Not at all</span>
+                        <span>7 = Completely</span>
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="1" id="trust1"><label for="trust1">1</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="2" id="trust2"><label for="trust2">2</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="3" id="trust3"><label for="trust3">3</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="4" id="trust4"><label for="trust4">4</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="5" id="trust5"><label for="trust5">5</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="6" id="trust6"><label for="trust6">6</label></div>
+                        <div class="radio-item"><input type="radio" name="trustworthiness" value="7" id="trust7"><label for="trust7">7</label></div>
+                    </div>
+                </div>
+
+                <div class="question-block">
+                    <div class="question-text">2. How anxious or uncomfortable did this voice make you feel?</div>
+                    <div class="scale-labels">
+                        <span>1 = Not at all</span>
+                        <span>7 = Very much</span>
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="anxiety" value="1" id="anx1"><label for="anx1">1</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="2" id="anx2"><label for="anx2">2</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="3" id="anx3"><label for="anx3">3</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="4" id="anx4"><label for="anx4">4</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="5" id="anx5"><label for="anx5">5</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="6" id="anx6"><label for="anx6">6</label></div>
+                        <div class="radio-item"><input type="radio" name="anxiety" value="7" id="anx7"><label for="anx7">7</label></div>
+                    </div>
+                </div>
+
+                <div class="question-block">
+                    <div class="question-text">3. How much do you prefer this voice?</div>
+                    <div class="scale-labels">
+                        <span>1 = Not at all</span>
+                        <span>7 = Very much</span>
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="preference" value="1" id="pref1"><label for="pref1">1</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="2" id="pref2"><label for="pref2">2</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="3" id="pref3"><label for="pref3">3</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="4" id="pref4"><label for="pref4">4</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="5" id="pref5"><label for="pref5">5</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="6" id="pref6"><label for="pref6">6</label></div>
+                        <div class="radio-item"><input type="radio" name="preference" value="7" id="pref7"><label for="pref7">7</label></div>
+                    </div>
+                </div>
+
+                <div class="question-block">
+                    <div class="question-text">4. How dominant or authoritative does this speaker sound?</div>
+                    <div class="scale-labels">
+                        <span>1 = Not dominant at all</span>
+                        <span>7 = Very dominant</span>
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="dominance" value="1" id="dom1"><label for="dom1">1</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="2" id="dom2"><label for="dom2">2</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="3" id="dom3"><label for="dom3">3</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="4" id="dom4"><label for="dom4">4</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="5" id="dom5"><label for="dom5">5</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="6" id="dom6"><label for="dom6">6</label></div>
+                        <div class="radio-item"><input type="radio" name="dominance" value="7" id="dom7"><label for="dom7">7</label></div>
+                    </div>
+                </div>
+
+                <div class="question-block">
+                    <div class="question-text">5. How warm and approachable is this speaker?</div>
+                    <div class="scale-labels">
+                        <span>1 = Not warm at all</span>
+                        <span>7 = Very warm</span>
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="warmth" value="1" id="warm1"><label for="warm1">1</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="2" id="warm2"><label for="warm2">2</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="3" id="warm3"><label for="warm3">3</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="4" id="warm4"><label for="warm4">4</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="5" id="warm5"><label for="warm5">5</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="6" id="warm6"><label for="warm6">6</label></div>
+                        <div class="radio-item"><input type="radio" name="warmth" value="7" id="warm7"><label for="warm7">7</label></div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="nav-buttons">
+                <button type="button" class="btn-prev" id="prevBtn" onclick="prevAudio()">← Previous</button>
+                <button type="button" class="btn-next" id="nextBtn" onclick="nextAudio()">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audioFiles = [
+            'M-Po-A.mp3', 'M-Po-A-a.mp3', 'M-Po-A-f.mp3',
+            'M-Po-B.mp3', 'M-Po-B-a.mp3', 'M-Po-B-f.mp3',
+            'M-Ne-A.mp3', 'M-Ne-A-a.mp3', 'M-Ne-A-f.mp3',
+            'M-Ne-B.mp3', 'M-Ne-B-a.mp3', 'M-Ne-B-f.mp3',
+            'M-Info-A.mp3', 'M-Info-A-a.mp3', 'M-Info-A-f.mp3',
+            'M-Info-B.mp3', 'M-Info-B-a.mp3', 'M-Info-B-f.mp3',
+            'F-Po-A.mp3', 'F-Po-A-a.mp3', 'F-Po-A-f.mp3',
+            'F-Po-B.mp3', 'F-Po-B-a.mp3', 'F-Po-B-f.mp3',
+            'F-Ne-A.mp3', 'F-Ne-A-a.mp3', 'F-Ne-A-f.mp3',
+            'F-Ne-B.mp3', 'F-Ne-B-a.mp3', 'F-Ne-B-f.mp3',
+            'F-Info-A.mp3', 'F-Info-A-a.mp3', 'F-Info-A-f.mp3',
+            'F-Info-B.mp3', 'F-Info-B-a.mp3', 'F-Info-B-f.mp3'
+        ];
+
+        let shuffledFiles = [...audioFiles].sort(() => Math.random() - 0.5);
+        let currentIndex = 0;
+        let responses = [];
+        let listenTime = 0;
+        let listenInterval = null;
+        let hasListenedEnough = false;
+
+        function startEvaluation() {
+            document.getElementById('instructionPage').style.display = 'none';
+            document.getElementById('evaluationPage').style.display = 'block';
+            loadProgress();
+            loadAudio();
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('phase1_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                shuffledFiles = data.shuffledFiles;
+                currentIndex = data.currentIndex;
+                responses = data.responses;
+            }
+        }
+
+        function saveProgress() {
+            const data = {
+                shuffledFiles: shuffledFiles,
+                currentIndex: currentIndex,
+                responses: responses
+            };
+            localStorage.setItem('phase1_progress', JSON.stringify(data));
+        }
+
+        function loadAudio() {
+            const audioSource = document.getElementById('audioSource');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const filename = shuffledFiles[currentIndex];
+
+            audioSource.src = '/static/audio/phase1/' + filename;
+            audioPlayer.load();
+            audioPlayer.play();
+
+            // 청취 시간 초기화
+            listenTime = 0;
+            hasListenedEnough = false;
+            updateListenTimer();
+
+            // 청취 시간 카운트
+            clearInterval(listenInterval);
+            listenInterval = setInterval(() => {
+                if (!audioPlayer.paused) {
+                    listenTime++;
+                    updateListenTimer();
+                    if (listenTime >= 5 && !hasListenedEnough) {
+                        hasListenedEnough = true;
+                        updateListenTimer();
+                    }
+                }
+            }, 1000);
+
+            updateProgress();
+            loadPreviousResponses();
+            updateButtons();
+        }
+
+        function updateListenTimer() {
+            const timer = document.getElementById('listenTimer');
+            if (hasListenedEnough) {
+                timer.textContent = '✓ You may now proceed';
+                timer.className = 'listen-timer completed';
+            } else {
+                timer.textContent = `⏱ Please listen for at least ${5 - listenTime} more seconds...`;
+                timer.className = 'listen-timer';
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentIndex + 1) / shuffledFiles.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `Audio ${currentIndex + 1} of ${shuffledFiles.length}`;
+        }
+
+        function loadPreviousResponses() {
+            const form = document.getElementById('evaluationForm');
+            const inputs = form.querySelectorAll('input[type="radio"]');
+            inputs.forEach(input => input.checked = false);
+
+            if (responses[currentIndex]) {
+                const data = responses[currentIndex];
+                if (data.trustworthiness) document.querySelector(`input[name="trustworthiness"][value="${data.trustworthiness}"]`).checked = true;
+                if (data.anxiety) document.querySelector(`input[name="anxiety"][value="${data.anxiety}"]`).checked = true;
+                if (data.preference) document.querySelector(`input[name="preference"][value="${data.preference}"]`).checked = true;
+                if (data.dominance) document.querySelector(`input[name="dominance"][value="${data.dominance}"]`).checked = true;
+                if (data.warmth) document.querySelector(`input[name="warmth"][value="${data.warmth}"]`).checked = true;
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (currentIndex === shuffledFiles.length - 1) {
+                nextBtn.textContent = 'Submit';
+            } else {
+                nextBtn.textContent = 'Next →';
+            }
+        }
+
+        function saveCurrentResponse() {
+            const form = document.getElementById('evaluationForm');
+            const trustworthiness = form.querySelector('input[name="trustworthiness"]:checked');
+            const anxiety = form.querySelector('input[name="anxiety"]:checked');
+            const preference = form.querySelector('input[name="preference"]:checked');
+            const dominance = form.querySelector('input[name="dominance"]:checked');
+            const warmth = form.querySelector('input[name="warmth"]:checked');
+
+            if (!trustworthiness || !anxiety || !preference || !dominance || !warmth) {
+                return false;
+            }
+
+            responses[currentIndex] = {
+                filename: shuffledFiles[currentIndex],
+                trustworthiness: parseInt(trustworthiness.value),
+                anxiety: parseInt(anxiety.value),
+                preference: parseInt(preference.value),
+                dominance: parseInt(dominance.value),
+                warmth: parseInt(warmth.value),
+                timestamp: new Date().toISOString(),
+                listenTime: listenTime
+            };
+
+            return true;
+        }
+
+        function nextAudio() {
+            document.getElementById('errorMessage').textContent = '';
+
+            if (!hasListenedEnough) {
+                document.getElementById('errorMessage').textContent = 'Please listen to the audio for at least 5 seconds before proceeding.';
+                return;
+            }
+
+            if (!saveCurrentResponse()) {
+                document.getElementById('errorMessage').textContent = 'Please answer all questions before proceeding.';
+                return;
+            }
+
+            if (currentIndex < shuffledFiles.length - 1) {
+                currentIndex++;
+                loadAudio();
+                saveProgress();
+                window.scrollTo(0, 0);
+            } else {
+                submitResults();
+            }
+        }
+
+        function prevAudio() {
+            saveCurrentResponse();
+
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadAudio();
+                saveProgress();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function submitResults() {
+            const resultsData = {
+                phase: 1,
+                participant_id: sessionStorage.getItem('participant_id') || 'anonymous',
+                responses: responses,
+                completed_at: new Date().toISOString()
+            };
+
+            fetch('/api/submit_phase1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(resultsData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.removeItem('phase1_progress');
+                    window.location.href = '/phase2';
+                } else {
+                    alert('Error submitting results. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting results. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -7,3 +7,9 @@ outputs/*
 static/plots/*
 *.wav
 *.mp3
+all_participant_data.csv
+phase2_data.csv
+data/
+app_backup*.py
+templates/phase1_backup.html
+templates/welcome_backup.html
