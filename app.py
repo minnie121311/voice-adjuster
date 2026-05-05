@@ -226,12 +226,22 @@ Data will be included in final Excel file after Phase 2 completion.
         msg.attach(MIMEText(body, 'plain'))
 
         if SMTP_EMAIL and SMTP_PASSWORD:
-            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
-            print(f"✓ Phase 1 email sent to {RESEARCHER_EMAIL}")
+            sent = False
+            for port, use_ssl in [(587, False), (465, True)]:
+                try:
+                    if use_ssl:
+                        server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
+                    else:
+                        server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
+                        server.starttls()
+                    server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                    server.send_message(msg)
+                    server.quit()
+                    print(f"✓ Phase 1 email sent to {RESEARCHER_EMAIL} via port {port}")
+                    sent = True
+                    break
+                except Exception as port_err:
+                    print(f"Port {port} failed: {port_err}")
 
     except Exception as e:
         print(f"Phase 1 email error: {str(e)}")
@@ -477,18 +487,89 @@ Complete data is attached as Excel file with tabs:
             msg.attach(part)
 
         if SMTP_EMAIL and SMTP_PASSWORD:
-            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
-            print(f"✓ Excel file sent to {RESEARCHER_EMAIL}")
+            sent = False
+            last_err = None
+            for port, use_ssl in [(587, False), (465, True)]:
+                try:
+                    if use_ssl:
+                        server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
+                    else:
+                        server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
+                        server.starttls()
+                    server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                    server.send_message(msg)
+                    server.quit()
+                    print(f"✓ Excel file sent to {RESEARCHER_EMAIL} via port {port}")
+                    sent = True
+                    break
+                except Exception as port_err:
+                    last_err = port_err
+                    print(f"Port {port} failed: {port_err}")
+            if not sent:
+                raise last_err
 
     except Exception as e:
         print(f"Excel email error: {str(e)}")
         import traceback
         traceback.print_exc()
 
+
+
+@app.route('/admin/test-email')
+def test_email():
+    admin_key = request.args.get('key')
+    if admin_key != 'ucl-voice-study-2026':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    results = []
+    for port, use_ssl in [(587, False), (465, True)]:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_EMAIL
+            msg['To'] = RESEARCHER_EMAIL
+            msg['Subject'] = 'Voice Study - Email Test'
+            msg.attach(MIMEText(f'Test email from Railway via port {port}', 'plain'))
+
+            if use_ssl:
+                server = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=15)
+            else:
+                server = smtplib.SMTP('smtp.gmail.com', port, timeout=15)
+                server.starttls()
+            server.login(SMTP_EMAIL, SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            results.append({'port': port, 'status': 'success'})
+            break
+        except Exception as e:
+            results.append({'port': port, 'status': 'failed', 'error': str(e)})
+
+    return jsonify({'results': results})
+
+
+@app.route('/admin/csv-status')
+def csv_status():
+    admin_key = request.args.get('key')
+    if admin_key != 'ucl-voice-study-2026':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    rows = 0
+    last_session = None
+    if os.path.exists(ALL_DATA_CSV):
+        with open(ALL_DATA_CSV, 'r') as f:
+            lines = f.readlines()
+        rows = len(lines) - 1
+        if rows > 0:
+            last_session = lines[-1].split(',')[0]
+
+    excel_files = []
+    if os.path.exists(DATA_DIR):
+        excel_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.xlsx')]
+
+    return jsonify({
+        'csv_rows': rows,
+        'last_session': last_session,
+        'excel_files': excel_files
+    })
 
 @app.route('/thankyou')
 def thankyou():
