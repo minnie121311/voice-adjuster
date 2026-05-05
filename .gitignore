@@ -5,7 +5,7 @@ __pycache__/
 uploads/*
 outputs/*
 static/plots/*
-*.wav
+static/*.wav
 # *.mp3
 all_participant_data.csv
 phase2_data.csv
