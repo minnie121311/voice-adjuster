@@ -387,13 +387,24 @@
             pitchValue.textContent = '0.0 st';
         }
 
+        let autoPlayTimer = null;
+
+        function scheduleAutoPlay() {
+            clearTimeout(autoPlayTimer);
+            if (!hasPlayedAudio) return;
+            status.textContent = 'Updating...';
+            autoPlayTimer = setTimeout(() => { playBtn.click(); }, 800);
+        }
+
         formantSlider.addEventListener('input', (e) => {
             formantValue.textContent = e.target.value;
+            scheduleAutoPlay();
         });
 
         pitchSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             pitchValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' st';
+            scheduleAutoPlay();
         });
 
         resetBtn.addEventListener('click', () => {
