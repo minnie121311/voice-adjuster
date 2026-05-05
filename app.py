@@ -201,29 +201,33 @@ def submit_phase1():
 
 
 def send_email_resend(to, subject, body, attachment_bytes=None, attachment_name=None):
-    api_key = os.environ.get('RESEND_API_KEY')
-    if not api_key:
-        print('RESEND_API_KEY not set')
-        return False
-    payload = {
-        'from': 'Voice Study <onboarding@resend.dev>',
-        'to': [to],
-        'subject': subject,
-        'text': body
-    }
-    if attachment_bytes and attachment_name:
-        payload['attachments'] = [{
-            'filename': attachment_name,
-            'content': base64.b64encode(attachment_bytes).decode()
-        }]
-    resp = requests.post(
-        'https://api.resend.com/emails',
-        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-        json=payload,
-        timeout=15
-    )
-    print(f'Resend response: {resp.status_code} {resp.text}')
-    return resp.status_code == 200
+    try:
+        api_key = os.environ.get('RESEND_API_KEY')
+        if not api_key:
+            print('RESEND_API_KEY not set')
+            return False, 'RESEND_API_KEY not set'
+        payload = {
+            'from': 'Voice Study <onboarding@resend.dev>',
+            'to': [to],
+            'subject': subject,
+            'text': body
+        }
+        if attachment_bytes and attachment_name:
+            payload['attachments'] = [{
+                'filename': attachment_name,
+                'content': base64.b64encode(attachment_bytes).decode()
+            }]
+        resp = requests.post(
+            'https://api.resend.com/emails',
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+            json=payload,
+            timeout=15
+        )
+        print(f'Resend response: {resp.status_code} {resp.text}')
+        return resp.status_code == 200, f'{resp.status_code}: {resp.text}'
+    except Exception as e:
+        print(f'Resend exception: {e}')
+        return False, str(e)
 
 
 def send_phase1_email(participant_id, response_count):
@@ -236,7 +240,7 @@ Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Responses: {response_count} audio evaluations
 
 Data will be included in final Excel file after Phase 2 completion.'''
-        send_email_resend(RESEARCHER_EMAIL, f'Voice Study - Phase 1 Complete - {participant_id}', body)
+        ok, _ = send_email_resend(RESEARCHER_EMAIL, f'Voice Study - Phase 1 Complete - {participant_id}', body)
     except Exception as e:
         print(f"Phase 1 email error: {str(e)}")
 
@@ -461,7 +465,7 @@ Complete data is attached as Excel file with tabs:
         with open(excel_path, 'rb') as f:
             excel_bytes = f.read()
 
-        ok = send_email_resend(
+        ok, detail = send_email_resend(
             RESEARCHER_EMAIL,
             f'Voice Study - COMPLETE - {session_id}',
             body,
@@ -471,7 +475,7 @@ Complete data is attached as Excel file with tabs:
         if ok:
             print(f"✓ Excel email sent to {RESEARCHER_EMAIL}")
         else:
-            print("Excel email failed via Resend")
+            print(f"Excel email failed via Resend: {detail}")
 
     except Exception as e:
         print(f"Excel email error: {str(e)}")
@@ -486,12 +490,12 @@ def test_email():
     if admin_key != 'ucl-voice-study-2026':
         return jsonify({'error': 'Unauthorized'}), 403
 
-    ok = send_email_resend(
+    ok, detail = send_email_resend(
         RESEARCHER_EMAIL,
         'Voice Study - Email Test',
         f'Test email from Railway at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
     )
-    return jsonify({'status': 'success' if ok else 'failed'})
+    return jsonify({'status': 'success' if ok else 'failed', 'detail': detail})
 
 
 @app.route('/admin/csv-status')
