@@ -244,9 +244,22 @@
         #mainScreen {
             display: none;
         }
+        .ucl-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        .ucl-logo img {
+            height: 60px;
+            width: auto;
+        }
     </style>
 </head>
 <body>
+    <div class="ucl-logo">
+        <img src="/static/ucl_logo.png" alt="UCL Logo">
+    </div>
     <div class="container">
         <!-- Start Screen -->
         <div id="startScreen">
