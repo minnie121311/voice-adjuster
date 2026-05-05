@@ -128,5 +128,46 @@
         
         <button class="btn-next" onclick="location.href='/consent'">Continue to Consent Form</button>
     </div>
+
+<!-- Issue Report Widget -->
+<div onclick="document.getElementById('issueModal').style.display='flex'" style="position:fixed;bottom:20px;right:20px;background:#555;color:white;padding:10px 16px;border-radius:20px;cursor:pointer;font-size:13px;font-family:-apple-system,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.25);z-index:9999;">⚠ Something wrong with this page?</div>
+<div id="issueModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:10000;">
+  <div style="background:white;border-radius:8px;padding:30px;max-width:400px;width:90%;font-family:-apple-system,sans-serif;">
+    <h3 style="margin:0 0 15px;font-size:16px;color:#333;">Report an issue</h3>
+    <textarea id="issueText" placeholder="Please describe the problem..." style="width:100%;height:100px;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+    <div style="display:flex;gap:10px;margin-top:15px;">
+      <button onclick="submitIssue()" style="flex:1;padding:10px;background:#555;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Send Report</button>
+      <button onclick="document.getElementById('issueModal').style.display='none'" style="flex:1;padding:10px;background:#e0e0e0;color:#333;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+    </div>
+    <div id="issueStatus" style="margin-top:10px;font-size:13px;text-align:center;color:#666;"></div>
+  </div>
+</div>
+<script>
+async function submitIssue() {
+  const msg = document.getElementById('issueText').value.trim();
+  if (!msg) return;
+  document.getElementById('issueStatus').textContent = 'Sending...';
+  try {
+    const resp = await fetch('/report-issue', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg, page: window.location.pathname})
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById('issueStatus').textContent = 'Report sent. Thank you!';
+      document.getElementById('issueText').value = '';
+      setTimeout(() => {
+        document.getElementById('issueModal').style.display = 'none';
+        document.getElementById('issueStatus').textContent = '';
+      }, 2000);
+    } else {
+      document.getElementById('issueStatus').textContent = 'Failed to send. Please try again.';
+    }
+  } catch(e) {
+    document.getElementById('issueStatus').textContent = 'Error: ' + e.message;
+  }
+}
+</script>
 </body>
 </html>

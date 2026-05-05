@@ -543,6 +543,21 @@ def download_csv():
         return jsonify({'error': str(e)}), 500
 
 
+
+@app.route('/report-issue', methods=['POST'])
+def report_issue():
+    data = request.get_json()
+    message = data.get('message', '')
+    page = data.get('page', 'unknown')
+    body = f'''Issue reported from page: {page}
+
+Message:
+{message}
+
+Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'''
+    ok, _ = send_email_resend(RESEARCHER_EMAIL, f'Voice Study - Issue Report ({page})', body)
+    return jsonify({'ok': ok})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     print(f"Starting Flask app on port {port}...")
