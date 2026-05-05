@@ -24,7 +24,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-pr
 
 
 # 연구자 설정
-RESEARCHER_EMAIL = 'ucjvmki@ucl.ac.uk'
+RESEARCHER_EMAIL = 'minnie1211@gmail.com'
 SMTP_EMAIL = 'minnie1211@gmail.com'
 SMTP_PASSWORD = 'apck becz medp lddg'
 
