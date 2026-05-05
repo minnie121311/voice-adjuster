@@ -6,7 +6,7 @@ uploads/*
 outputs/*
 static/plots/*
 *.wav
-*.mp3
+# *.mp3
 all_participant_data.csv
 phase2_data.csv
 data/
