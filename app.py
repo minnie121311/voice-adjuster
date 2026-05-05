@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 import io
+import threading
 try:
     import openpyxl
     from openpyxl import Workbook
@@ -189,7 +190,7 @@ def submit_phase1():
 
         print(f"Phase 1 data saved: {filename}")
 
-        send_phase1_email(participant_id, len(responses))
+        threading.Thread(target=send_phase1_email, args=(participant_id, len(responses)), daemon=True).start()
 
         return jsonify({
             'success': True,
@@ -225,7 +226,7 @@ Data will be included in final Excel file after Phase 2 completion.
         msg.attach(MIMEText(body, 'plain'))
 
         if SMTP_EMAIL and SMTP_PASSWORD:
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
             server.starttls()
             server.login(SMTP_EMAIL, SMTP_PASSWORD)
             server.send_message(msg)
@@ -367,7 +368,8 @@ def submit_adjustment():
         session['current_index'] = index + 1
 
         if session['current_index'] >= len(folders):
-            send_complete_excel(session.get('study_session_id'))
+            sid = session.get('study_session_id')
+            threading.Thread(target=send_complete_excel, args=(sid,), daemon=True).start()
 
             return jsonify({
                 'completed': True,
@@ -475,7 +477,7 @@ Complete data is attached as Excel file with tabs:
             msg.attach(part)
 
         if SMTP_EMAIL and SMTP_PASSWORD:
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
             server.starttls()
             server.login(SMTP_EMAIL, SMTP_PASSWORD)
             server.send_message(msg)
