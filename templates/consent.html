@@ -191,23 +191,32 @@
 
 
     <script>
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const finalConsent = document.getElementById('consent5');
+        const topCheckboxes = ['consent1', 'consent2', 'consent3', 'consent4']
+            .map(id => document.getElementById(id));
         const agreeBtn = document.getElementById('agreeBtn');
         const errorMessage = document.getElementById('errorMessage');
-        
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                agreeBtn.disabled = !allChecked;
-                if (allChecked) {
-                    errorMessage.classList.remove('active');
-                }
-            });
+
+        function updateButtonState() {
+            const topAllChecked = topCheckboxes.every(cb => cb.checked);
+            agreeBtn.disabled = !topAllChecked;
+            if (topAllChecked) {
+                errorMessage.classList.remove('active');
+            }
+        }
+
+        topCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateButtonState);
         });
-        
+
+        finalConsent.addEventListener('change', () => {
+            topCheckboxes.forEach(cb => cb.checked = finalConsent.checked);
+            updateButtonState();
+        });
+
         agreeBtn.addEventListener('click', async () => {
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            if (!allChecked) {
+            const topAllChecked = topCheckboxes.every(cb => cb.checked);
+            if (!topAllChecked) {
                 errorMessage.classList.add('active');
                 return;
             }
