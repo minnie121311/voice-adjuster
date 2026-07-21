@@ -407,107 +407,136 @@ def submit_adjustment():
         return jsonify({'error': str(e)}), 500
 
 
+def build_master_workbook():
+    """Rebuild a wide-format workbook covering every participant found in ALL_DATA_CSV."""
+    from collections import OrderedDict
+
+    all_rows = []
+    if os.path.exists(ALL_DATA_CSV):
+        with open(ALL_DATA_CSV, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            next(reader, None)
+            all_rows = list(reader)
+
+    sessions = OrderedDict()
+    for row in all_rows:
+        sessions.setdefault(row[0], []).append(row)
+
+    wb = Workbook()
+
+    # --- Sheet 1: Phase 1 wide (all participants) ---
+    ws1 = wb.active
+    ws1.title = 'Phase 1'
+    all_p1_files = []
+    seen = set()
+    for rows in sessions.values():
+        for r in sorted([x for x in rows if x[2] == 'phase1'], key=lambda x: x[8]):
+            fname = r[8].replace('.mp3', '')
+            if fname not in seen:
+                seen.add(fname)
+                all_p1_files.append(fname)
+    p1_header = ['Session ID']
+    for fname in all_p1_files:
+        for m in ['trust', 'anxiety', 'pref', 'dom', 'warmth']:
+            p1_header.append(f'{fname}_{m}')
+    ws1.append(p1_header)
+    for sid, rows in sessions.items():
+        p1_map = {r[8].replace('.mp3', ''): r for r in rows if r[2] == 'phase1'}
+        row_data = [sid]
+        for fname in all_p1_files:
+            if fname in p1_map:
+                r = p1_map[fname]
+                row_data.extend([r[9], r[10], r[11], r[12], r[13]])
+            else:
+                row_data.extend(['', '', '', '', ''])
+        ws1.append(row_data)
+
+    # --- Sheet 2: Phase 2 wide (all participants) ---
+    ws2 = wb.create_sheet('Phase 2')
+    all_p2_folders = []
+    seen2 = set()
+    for rows in sessions.values():
+        for r in sorted([x for x in rows if x[2] == 'phase2'], key=lambda x: x[15]):
+            folder = r[15]
+            if folder not in seen2:
+                seen2.add(folder)
+                all_p2_folders.append(folder)
+    p2_header = ['Session ID']
+    for folder in all_p2_folders:
+        p2_header.append(f'{folder}_formant')
+        p2_header.append(f'{folder}_pitch')
+    ws2.append(p2_header)
+    for sid, rows in sessions.items():
+        p2_map = {r[15]: r for r in rows if r[2] == 'phase2'}
+        row_data = [sid]
+        for folder in all_p2_folders:
+            if folder in p2_map:
+                r = p2_map[folder]
+                row_data.extend([r[16], r[17]])
+            else:
+                row_data.extend(['', ''])
+        ws2.append(row_data)
+
+    # --- Sheet 3: LSAS ---
+    ws3 = wb.create_sheet('LSAS')
+    ws3.append(['Session ID', 'Timestamp', 'Fear Score', 'Avoidance Score', 'Total Score'])
+    for rows in sessions.values():
+        for r in rows:
+            if r[2] == 'lsas':
+                ws3.append([r[0], r[1], r[5], r[6], r[7]])
+
+    # --- Sheet 4: Consent ---
+    ws4 = wb.create_sheet('Consent')
+    ws4.append(['Session ID', 'Timestamp', 'Consent Given', 'Consent Time'])
+    for rows in sessions.values():
+        for r in rows:
+            if r[2] == 'consent':
+                ws4.append([r[0], r[1], r[3], r[4]])
+
+    return wb, len(sessions)
+
+
 def send_complete_excel(session_id):
     try:
         if not session_id:
             print("send_complete_excel: session_id is None, skipping")
             return
 
-        print(f"Creating Excel file for session: {session_id}")
+        print(f"Rebuilding master Excel after completion: {session_id}")
 
         if not EXCEL_AVAILABLE:
             print("Excel export not available")
             return
 
-        wb = Workbook()
-        wb.remove(wb.active)
+        wb, total_sessions = build_master_workbook()
 
-        # 참여자 데이터 읽기
-        participant_data = []
-        with open(ALL_DATA_CSV, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            for row in reader:
-                if row[0] == session_id:
-                    participant_data.append(row)
-
-        # Summary sheet
-        ws_summary = wb.create_sheet("Summary")
-        ws_summary.append(['Session ID', session_id])
-        ws_summary.append(['Completed', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
-        ws_summary.append([])
-
-        # Data sheets
-        ws_consent = wb.create_sheet("Consent")
-        ws_consent.append(['Session ID', 'Timestamp', 'Consent Given', 'Consent Time'])
-
-        ws_lsas = wb.create_sheet("LSAS")
-        ws_lsas.append(['Session ID', 'Timestamp', 'Fear Score', 'Avoidance Score', 'Total Score'])
-
-        # --- Phase 1: wide format (filenames as columns) ---
-        phase1_data = [r for r in participant_data if r[2] == 'phase1']
-        phase1_data.sort(key=lambda r: r[8])
-        ws_phase1 = wb.create_sheet("Phase 1")
-        p1_header = ['Session ID']
-        for r in phase1_data:
-            fname = r[8].replace('.mp3', '')
-            for m in ['trust', 'anxiety', 'pref', 'dom', 'warmth']:
-                p1_header.append(f'{fname}_{m}')
-        ws_phase1.append(p1_header)
-        p1_row = [session_id]
-        for r in phase1_data:
-            p1_row.extend([r[9], r[10], r[11], r[12], r[13]])
-        ws_phase1.append(p1_row)
-
-        # --- Phase 2: wide format (folder names as columns) ---
-        phase2_data = [r for r in participant_data if r[2] == 'phase2']
-        phase2_data.sort(key=lambda r: r[15])
-        ws_phase2 = wb.create_sheet("Phase 2")
-        p2_header = ['Session ID']
-        for r in phase2_data:
-            folder = r[15]
-            p2_header.append(f'{folder}_formant')
-            p2_header.append(f'{folder}_pitch')
-        ws_phase2.append(p2_header)
-        p2_row = [session_id]
-        for r in phase2_data:
-            p2_row.extend([r[16], r[17]])
-        ws_phase2.append(p2_row)
-
-        for row in participant_data:
-            data_type = row[2]
-            if data_type == 'consent':
-                ws_consent.append([row[0], row[1], row[3], row[4]])
-            elif data_type == 'lsas':
-                ws_lsas.append([row[0], row[1], row[5], row[6], row[7]])
-
-        # Save Excel
-        excel_filename = f'study_data_{session_id}.xlsx'
-        excel_path = os.path.join(DATA_DIR, excel_filename)
-        wb.save(excel_path)
+        master_filename = 'all_participants_master.xlsx'
+        master_path = os.path.join(DATA_DIR, master_filename)
+        wb.save(master_path)
 
         body = f'''A participant has completed the entire study!
 
-Session ID: {session_id}
+Just completed - Session ID: {session_id}
 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Total participants so far: {total_sessions}
 
-Complete data is attached as Excel file with tabs:
-- Summary / Consent / LSAS / Phase 1 (36 evaluations) / Phase 2 (9 adjustments)'''
+Attached is the updated master Excel file covering ALL participants to date, with tabs:
+- Phase 1 / Phase 2 / LSAS / Consent'''
 
-        with open(excel_path, 'rb') as f:
+        with open(master_path, 'rb') as f:
             excel_bytes = f.read()
 
         ok, detail = send_email_resend(
             RESEARCHER_EMAIL,
-            f'Voice Study - COMPLETE - {session_id}',
+            f'Voice Study - Master Data Updated ({total_sessions} participants)',
             body,
             attachment_bytes=excel_bytes,
-            attachment_name=excel_filename
+            attachment_name=master_filename
         )
         if ok:
-            print(f"✓ Excel email sent to {RESEARCHER_EMAIL}")
+            print(f"✓ Master Excel email sent to {RESEARCHER_EMAIL}")
         else:
-            print(f"Excel email failed via Resend: {detail}")
+            print(f"Master Excel email failed via Resend: {detail}")
 
     except Exception as e:
         print(f"Excel email error: {str(e)}")
@@ -587,86 +616,7 @@ def download_excel():
         return jsonify({'error': 'openpyxl not installed'}), 500
 
     try:
-        wb = Workbook()
-
-        # Read all CSV data
-        all_rows = []
-        if os.path.exists(ALL_DATA_CSV):
-            with open(ALL_DATA_CSV, 'r', encoding='utf-8') as f:
-                reader = csv.reader(f)
-                header = next(reader, None)
-                all_rows = list(reader)
-
-        # Group by session
-        from collections import defaultdict, OrderedDict
-        sessions = OrderedDict()
-        for row in all_rows:
-            sid = row[0]
-            if sid not in sessions:
-                sessions[sid] = []
-            sessions[sid].append(row)
-
-        # --- Sheet 1: Phase 1 wide (all participants) ---
-        ws1 = wb.active
-        ws1.title = 'Phase 1'
-        # Collect all unique filenames across all sessions
-        all_p1_files = []
-        seen = set()
-        for rows in sessions.values():
-            for r in sorted([x for x in rows if x[2]=='phase1'], key=lambda x: x[8]):
-                fname = r[8].replace('.mp3','')
-                if fname not in seen:
-                    seen.add(fname)
-                    all_p1_files.append(fname)
-        p1_header = ['Session ID']
-        for fname in all_p1_files:
-            for m in ['trust','anxiety','pref','dom','warmth']:
-                p1_header.append(f'{fname}_{m}')
-        ws1.append(p1_header)
-        for sid, rows in sessions.items():
-            p1_map = {r[8].replace('.mp3',''): r for r in rows if r[2]=='phase1'}
-            row_data = [sid]
-            for fname in all_p1_files:
-                if fname in p1_map:
-                    r = p1_map[fname]
-                    row_data.extend([r[9],r[10],r[11],r[12],r[13]])
-                else:
-                    row_data.extend(['','','','',''])
-            ws1.append(row_data)
-
-        # --- Sheet 2: Phase 2 wide (all participants) ---
-        ws2 = wb.create_sheet('Phase 2')
-        all_p2_folders = []
-        seen2 = set()
-        for rows in sessions.values():
-            for r in sorted([x for x in rows if x[2]=='phase2'], key=lambda x: x[15]):
-                folder = r[15]
-                if folder not in seen2:
-                    seen2.add(folder)
-                    all_p2_folders.append(folder)
-        p2_header = ['Session ID']
-        for folder in all_p2_folders:
-            p2_header.append(f'{folder}_formant')
-            p2_header.append(f'{folder}_pitch')
-        ws2.append(p2_header)
-        for sid, rows in sessions.items():
-            p2_map = {r[15]: r for r in rows if r[2]=='phase2'}
-            row_data = [sid]
-            for folder in all_p2_folders:
-                if folder in p2_map:
-                    r = p2_map[folder]
-                    row_data.extend([r[16],r[17]])
-                else:
-                    row_data.extend(['',''])
-            ws2.append(row_data)
-
-        # --- Sheet 3: LSAS ---
-        ws3 = wb.create_sheet('LSAS')
-        ws3.append(['Session ID','Timestamp','Fear Score','Avoidance Score','Total Score'])
-        for rows in sessions.values():
-            for r in rows:
-                if r[2]=='lsas':
-                    ws3.append([r[0],r[1],r[5],r[6],r[7]])
+        wb, total_sessions = build_master_workbook()
 
         output = io.BytesIO()
         wb.save(output)
