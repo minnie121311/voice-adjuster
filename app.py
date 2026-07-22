@@ -246,8 +246,6 @@ def submit_phase1():
 
         print(f"Phase 1 data saved: {filename}")
 
-        threading.Thread(target=send_phase1_email, args=(participant_id, len(responses)), daemon=True).start()
-
         return jsonify({
             'success': True,
             'message': 'Data saved successfully',
@@ -287,21 +285,6 @@ def send_email_resend(to, subject, body, attachment_bytes=None, attachment_name=
     except Exception as e:
         print(f'Resend exception: {e}')
         return False, str(e)
-
-
-def send_phase1_email(participant_id, response_count):
-    try:
-        print(f"Sending Phase 1 email for: {participant_id}")
-        body = f'''A participant has completed Phase 1 (Voice Evaluation).
-
-Participant ID: {participant_id}
-Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Responses: {response_count} audio evaluations
-
-Data will be included in final Excel file after Phase 2 completion.'''
-        ok, _ = send_email_resend(RESEARCHER_EMAIL, f'Voice Study - Phase 1 Complete - {participant_id}', body)
-    except Exception as e:
-        print(f"Phase 1 email error: {str(e)}")
 
 
 @app.route('/phase2')
