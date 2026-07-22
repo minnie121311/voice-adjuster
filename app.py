@@ -84,6 +84,11 @@ def home():
 
 @app.route('/welcome')
 def welcome():
+    # Prolific redirects here with ?PROLIFIC_PID=...&STUDY_ID=...&SESSION_ID=...
+    # Capture it once into the session so later pages don't need the query string.
+    prolific_pid = request.args.get('PROLIFIC_PID')
+    if prolific_pid:
+        session['prolific_pid'] = prolific_pid
     return render_template('welcome.html')
 
 
@@ -122,7 +127,7 @@ def submit_consent():
 
 @app.route('/personal-info')
 def personal_info():
-    return render_template('personal_info.html')
+    return render_template('personal_info.html', prolific_pid=session.get('prolific_pid', ''))
 
 @app.route('/submit-personal-info', methods=['POST'])
 def submit_personal_info():

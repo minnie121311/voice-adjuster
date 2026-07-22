@@ -139,8 +139,15 @@
                 <div class="field-row single">
                     <div class="field-group">
                         <label for="prolificId">Prolific ID</label>
-                        <input type="text" id="prolificId" autocomplete="off" placeholder="e.g. 5f2a1b3c4d5e6f7a8b9c0d1e">
-                        <div class="field-hint">Copy this from the Prolific study page. We use it only to verify your submission and arrange payment via Prolific — we do not collect your name, address or bank details.</div>
+                        <input type="text" id="prolificId" autocomplete="off" placeholder="e.g. 5f2a1b3c4d5e6f7a8b9c0d1e"
+                               value="{{ prolific_pid }}" {% if prolific_pid %}readonly style="background:#f0f0f0;color:#666;"{% endif %}>
+                        <div class="field-hint">
+                          {% if prolific_pid %}
+                            Detected automatically from your Prolific link.
+                          {% else %}
+                            Copy this from the Prolific study page. We use it only to verify your submission and arrange payment via Prolific — we do not collect your name, address or bank details.
+                          {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="field-row single">
