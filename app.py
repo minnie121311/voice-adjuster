@@ -29,16 +29,21 @@ SMTP_EMAIL = 'minnie1211@gmail.com'
 SMTP_PASSWORD = 'apck becz medp lddg'
 
 
+# 영구 저장 위치 (Railway Volume을 이 경로에 마운트하고 DATA_ROOT 환경변수로 지정하면
+# 재배포되어도 참가자 데이터가 유지됨. 미설정 시 기존처럼 앱 디렉터리에 저장되어
+# 재배포할 때마다 초기화됨 - Railway는 컨테이너 파일시스템을 임시로 취급함)
+DATA_ROOT = os.environ.get('DATA_ROOT', '.')
+
 # CSV 파일들
-ALL_DATA_CSV = 'all_participant_data.csv'
-PHASE2_CSV = 'phase2_data.csv'
+ALL_DATA_CSV = os.path.join(DATA_ROOT, 'all_participant_data.csv')
+PHASE2_CSV = os.path.join(DATA_ROOT, 'phase2_data.csv')
 PHASE2_FOLDERS = ['p1', 'p2', 'p3', 'n1', 'n2', 'n3', 'i1', 'i2', 'i3']
 OUTPUT_DIR = 'static/adjusted'
-DATA_DIR = 'data/phase1'
+DATA_DIR = os.path.join(DATA_ROOT, 'data', 'phase1')
 
 
 # 폴더 생성
-for folder in [OUTPUT_DIR, DATA_DIR]:
+for folder in [DATA_ROOT, OUTPUT_DIR, DATA_DIR]:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
