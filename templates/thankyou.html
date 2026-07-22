@@ -112,6 +112,13 @@
             <p>Thank you for taking the time to complete this study. Your responses will contribute valuable insights to our research on voice perception in workplace communication.</p>
 
             <p>Your data has been securely saved and will be kept confidential in accordance with research ethics guidelines.</p>
+
+            {% if prolific_url %}
+            <p><strong>To complete your submission and be paid, please click the button below to return to Prolific.</strong></p>
+            <p><a href="{{ prolific_url }}" style="display:inline-block;background:#2563eb;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;">Return to Prolific</a></p>
+            {% else %}
+            <p>Please return to the Prolific study page to confirm your completion.</p>
+            {% endif %}
         </div>
 
         <div class="contact-box">

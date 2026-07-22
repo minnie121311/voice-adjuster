@@ -81,6 +81,19 @@
             font-style: italic;
             padding: 20px 0;
         }
+        .field-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .error-message {
+            color: #dc2626;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .error-message.active { display: block; }
         .buttons {
             display: flex;
             gap: 12px;
@@ -121,25 +134,27 @@
 
         <form id="personalInfoForm">
 
-            <!-- Section 1: Placeholder -->
             <div class="section">
-                <div class="section-title">Section 1</div>
-                <div class="placeholder-note">Content to be added</div>
-            </div>
-
-            <!-- Section 2: Placeholder -->
-            <div class="section">
-                <div class="section-title">Section 2</div>
-                <div class="placeholder-note">Content to be added</div>
-            </div>
-
-            <!-- Section 3: Placeholder -->
-            <div class="section">
-                <div class="section-title">Section 3</div>
-                <div class="placeholder-note">Content to be added</div>
+                <div class="section-title">Prolific verification</div>
+                <div class="field-row single">
+                    <div class="field-group">
+                        <label for="prolificId">Prolific ID</label>
+                        <input type="text" id="prolificId" autocomplete="off" placeholder="e.g. 5f2a1b3c4d5e6f7a8b9c0d1e">
+                        <div class="field-hint">Copy this from the Prolific study page. We use it only to verify your submission and arrange payment via Prolific — we do not collect your name, address or bank details.</div>
+                    </div>
+                </div>
+                <div class="field-row single">
+                    <div class="field-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" min="16" max="100" placeholder="e.g. 27">
+                        <div class="field-hint">This study is for participants aged 19–35, based in the UK (already screened via Prolific).</div>
+                    </div>
+                </div>
             </div>
 
         </form>
+
+        <div class="error-message" id="errorMessage"></div>
 
         <div class="buttons">
             <button class="btn-back" onclick="history.back()">Back</button>
@@ -149,11 +164,27 @@
 
     <script>
         async function submitForm() {
+            const errorMessage = document.getElementById('errorMessage');
+            const prolificId = document.getElementById('prolificId').value.trim();
+            const age = document.getElementById('age').value.trim();
+
+            if (!prolificId) {
+                errorMessage.textContent = 'Please enter your Prolific ID.';
+                errorMessage.classList.add('active');
+                return;
+            }
+            if (!age) {
+                errorMessage.textContent = 'Please enter your age.';
+                errorMessage.classList.add('active');
+                return;
+            }
+            errorMessage.classList.remove('active');
+
             try {
                 const response = await fetch('/submit-personal-info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({ prolific_id: prolificId, age: age })
                 });
                 const data = await response.json();
                 if (data.success) {

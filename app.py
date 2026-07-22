@@ -28,6 +28,10 @@ RESEARCHER_EMAIL = 'minnie1211@gmail.com'
 SMTP_EMAIL = 'minnie1211@gmail.com'
 SMTP_PASSWORD = 'apck becz medp lddg'
 
+# Prolific 완료 코드 - Prolific에서 study를 만들면 발급되는 completion code.
+# 값이 설정되기 전까지는 thankyou 페이지에 "Return to Prolific" 버튼이 표시되지 않음.
+PROLIFIC_COMPLETION_CODE = os.environ.get('PROLIFIC_COMPLETION_CODE', '')
+
 
 # 영구 저장 위치 (Railway Volume을 이 경로에 마운트하고 DATA_ROOT 환경변수로 지정하면
 # 재배포되어도 참가자 데이터가 유지됨. 미설정 시 기존처럼 앱 디렉터리에 저장되어
@@ -49,17 +53,20 @@ for folder in [DATA_ROOT, OUTPUT_DIR, DATA_DIR]:
 
 
 # 통합 CSV 초기화
+ALL_DATA_HEADER = [
+    'session_id', 'timestamp', 'data_type',
+    'consent_given', 'consent_time',
+    'lsas_fear', 'lsas_avoidance', 'lsas_total',
+    'phase1_audio', 'phase1_trustworthiness', 'phase1_anxiety',
+    'phase1_preference', 'phase1_dominance', 'phase1_warmth', 'phase1_listen_time',
+    'phase2_folder', 'phase2_formant', 'phase2_pitch',
+    'prolific_id', 'age'
+]
+
 if not os.path.exists(ALL_DATA_CSV):
     with open(ALL_DATA_CSV, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow([
-            'session_id', 'timestamp', 'data_type', 
-            'consent_given', 'consent_time',
-            'lsas_fear', 'lsas_avoidance', 'lsas_total',
-            'phase1_audio', 'phase1_trustworthiness', 'phase1_anxiety', 
-            'phase1_preference', 'phase1_dominance', 'phase1_warmth', 'phase1_listen_time',
-            'phase2_folder', 'phase2_formant', 'phase2_pitch'
-        ])
+        writer.writerow(ALL_DATA_HEADER)
 
 if not os.path.exists(PHASE2_CSV):
     with open(PHASE2_CSV, 'w', newline='', encoding='utf-8') as f:
@@ -102,7 +109,7 @@ def submit_consent():
                 'consent',
                 True,
                 session['consent_time'],
-                '', '', '', '', '', '', '', '', '', '', '', '', ''
+                '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
             ])
 
         print(f"Consent saved: {session['study_session_id']}")
@@ -120,6 +127,34 @@ def personal_info():
 @app.route('/submit-personal-info', methods=['POST'])
 def submit_personal_info():
     try:
+        data = request.json or {}
+        prolific_id = (data.get('prolific_id') or '').strip()
+        age = (data.get('age') or '').strip()
+
+        if not prolific_id or not age:
+            return jsonify({'error': 'prolific_id and age are required'}), 400
+
+        session['prolific_id'] = prolific_id
+        session['age'] = age
+
+        if 'study_session_id' not in session:
+            session['study_session_id'] = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+
+        with open(ALL_DATA_CSV, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                session['study_session_id'],
+                datetime.now().isoformat(),
+                'personal_info',
+                '', '',
+                '', '', '',
+                '', '', '', '', '', '', '',
+                '', '', '',
+                prolific_id, age
+            ])
+
+        print(f"Personal info saved: {session['study_session_id']} prolific_id={prolific_id}")
+
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -151,7 +186,8 @@ def submit_lsas():
                 'lsas',
                 '', '',
                 fear_total, avoidance_total, total_score,
-                '', '', '', '', '', '', '', '', '', ''
+                '', '', '', '', '', '', '', '', '', '',
+                '', ''
             ])
 
         print(f"LSAS saved: Fear={fear_total}, Avoidance={avoidance_total}, Total={total_score}")
@@ -192,7 +228,8 @@ def submit_phase1():
                     resp.get('dominance'),
                     resp.get('warmth'),
                     resp.get('listenTime', 0),
-                    '', '', ''
+                    '', '', '',
+                    '', ''
                 ])
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -387,7 +424,8 @@ def submit_adjustment():
                 '', '', '', '', '', '', '',
                 data.get('folder'),
                 data.get('formant'),
-                data.get('pitch')
+                data.get('pitch'),
+                '', ''
             ])
 
         session['current_index'] = index + 1
@@ -429,9 +467,18 @@ def build_master_workbook():
 
     wb = Workbook()
 
-    # --- Sheet 1: Phase 1 wide (all participants) ---
-    ws1 = wb.active
-    ws1.title = 'Phase 1'
+    # --- Sheet 1: Payment (Prolific ID + age, for payment reconciliation) ---
+    ws0 = wb.active
+    ws0.title = 'Payment'
+    ws0.append(['Session ID', 'Prolific ID', 'Age'])
+    for sid, rows in sessions.items():
+        pi_row = next((r for r in rows if r[2] == 'personal_info'), None)
+        prolific_id = pi_row[18] if pi_row else ''
+        age = pi_row[19] if pi_row else ''
+        ws0.append([sid, prolific_id, age])
+
+    # --- Sheet 2: Phase 1 wide (all participants) ---
+    ws1 = wb.create_sheet('Phase 1')
     all_p1_files = []
     seen = set()
     for rows in sessions.values():
@@ -598,14 +645,7 @@ def reset_data():
 
     with open(ALL_DATA_CSV, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow([
-            'session_id', 'timestamp', 'data_type',
-            'consent_given', 'consent_time',
-            'lsas_fear', 'lsas_avoidance', 'lsas_total',
-            'phase1_audio', 'phase1_trustworthiness', 'phase1_anxiety',
-            'phase1_preference', 'phase1_dominance', 'phase1_warmth', 'phase1_listen_time',
-            'phase2_folder', 'phase2_formant', 'phase2_pitch'
-        ])
+        writer.writerow(ALL_DATA_HEADER)
 
     with open(PHASE2_CSV, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -625,7 +665,10 @@ def reset_data():
 
 @app.route('/thankyou')
 def thankyou():
-    return render_template('thankyou.html')
+    prolific_url = None
+    if PROLIFIC_COMPLETION_CODE:
+        prolific_url = f'https://app.prolific.com/submissions/complete?cc={PROLIFIC_COMPLETION_CODE}'
+    return render_template('thankyou.html', prolific_url=prolific_url)
 
 
 @app.route('/download-csv')
