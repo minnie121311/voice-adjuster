@@ -589,6 +589,40 @@ def csv_status():
         'excel_files': excel_files
     })
 
+
+@app.route('/admin/reset-data', methods=['POST'])
+def reset_data():
+    admin_key = request.args.get('key')
+    if admin_key != 'ucl-voice-study-2026':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    with open(ALL_DATA_CSV, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            'session_id', 'timestamp', 'data_type',
+            'consent_given', 'consent_time',
+            'lsas_fear', 'lsas_avoidance', 'lsas_total',
+            'phase1_audio', 'phase1_trustworthiness', 'phase1_anxiety',
+            'phase1_preference', 'phase1_dominance', 'phase1_warmth', 'phase1_listen_time',
+            'phase2_folder', 'phase2_formant', 'phase2_pitch'
+        ])
+
+    with open(PHASE2_CSV, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'session_id', 'folder_name', 'file_index', 'formant_value', 'pitch_semitones'])
+
+    removed = 0
+    if os.path.exists(DATA_DIR):
+        for fname in os.listdir(DATA_DIR):
+            fpath = os.path.join(DATA_DIR, fname)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+                removed += 1
+
+    print(f"Data reset via admin endpoint, {removed} files removed from {DATA_DIR}")
+    return jsonify({'success': True, 'files_removed': removed})
+
+
 @app.route('/thankyou')
 def thankyou():
     return render_template('thankyou.html')
