@@ -19,7 +19,7 @@
             align-items: center;
             padding: 20px;
         }
-        
+
         /* UCL 로고 */
         .ucl-logo {
             position: fixed;
@@ -27,25 +27,31 @@
             left: 20px;
             z-index: 1000;
         }
-        
+
         .ucl-logo img {
             height: 60px;
             width: auto;
         }
-        
+
         .container {
             background: white;
             border-radius: 8px;
             padding: 50px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-width: 800px;
+            max-width: 820px;
             width: 100%;
         }
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 6px;
             font-size: 28px;
             text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 30px;
         }
         h2 {
             color: #555;
@@ -59,16 +65,65 @@
             margin-bottom: 12px;
             font-size: 15px;
         }
+
+        .study-info {
+            background: #fafafa;
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #555;
+        }
+        .study-info div {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+        .study-info strong {
+            color: #333;
+        }
+
+        .notice-box {
+            background: #f5f7ff;
+            border-left: 4px solid #2563eb;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #444;
+            line-height: 1.7;
+        }
+
         .consent-items {
-            margin: 30px 0;
+            margin: 25px 0;
             padding: 20px;
             background: #fafafa;
             border-radius: 6px;
         }
+        .consent-items-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .consent-items-header span {
+            font-size: 13px;
+            color: #777;
+        }
+        .select-all-btn {
+            background: none;
+            border: 1px solid #ccc;
+            color: #555;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .select-all-btn:hover {
+            background: #eee;
+        }
         .consent-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             padding: 12px;
             background: white;
             border-radius: 4px;
@@ -78,6 +133,7 @@
             margin-top: 4px;
             width: 20px;
             height: 20px;
+            min-width: 20px;
             cursor: pointer;
         }
         .consent-item label {
@@ -86,6 +142,39 @@
             cursor: pointer;
             font-size: 14px;
         }
+
+        .optional-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #fffdf5;
+            border: 1px solid #f2e8c9;
+            border-radius: 6px;
+        }
+        .optional-section h3 {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+        .optional-question {
+            margin-bottom: 16px;
+        }
+        .optional-question p {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .radio-row {
+            display: flex;
+            gap: 24px;
+        }
+        .radio-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+        }
+
         .buttons {
             display: flex;
             gap: 15px;
@@ -138,60 +227,130 @@
     </div>
 
     <div class="container">
-        <h1>Informed Consent Form</h1>
-        
-        <h2>Voluntary Participation</h2>
-        <p>Your participation in this research is entirely voluntary. You may withdraw at any time without providing a reason and without any consequences. If you withdraw before completing the study, we may not be able to pay you via Prolific for the incomplete submission.</p>
+        <h1>Consent Form</h1>
+        <div class="subtitle">For adults aged above 18 years participating in research studies</div>
 
-        <h2>Eligibility</h2>
-        <p>This study is open to participants aged 19–35, currently based in the UK. These criteria are set as screening filters on Prolific, so if you were able to accept this study you should meet them.</p>
+        <div class="study-info">
+            <div><strong>Title of Study:</strong> Understanding How Tone of Voice Agents Affects Users with Social Anxiety</div>
+            <div><strong>Department:</strong> UCLIC</div>
+            <div><strong>Researcher:</strong> Minhee Kim (MSc student) &mdash; <a href="mailto:minhee.kim.24@ucl.ac.uk">minhee.kim.24@ucl.ac.uk</a></div>
+            <div><strong>Principal Researcher:</strong> Martin Dechant &mdash; <a href="mailto:m.dechant@ucl.ac.uk">m.dechant@ucl.ac.uk</a></div>
+            <div><strong>UCL Data Protection Officer:</strong> Alexandra Potts &mdash; <a href="mailto:data-protection@ucl.ac.uk">data-protection@ucl.ac.uk</a></div>
+            <div><strong>UCLIC Research Ethics Committee Approval ID:</strong> UCLIC_2023_003_Dechant_Manning</div>
+        </div>
 
-        <h2>What the Study Involves</h2>
-        <p>You will complete a short questionnaire and listen to various voice samples, providing ratings and adjustments based on your preferences. The entire study will take approximately 30-40 minutes.</p>
+        <p>Thank you for considering taking part in this research. Please read the Information Sheet on the previous page before completing this form. If you have any questions, please contact the research team using the details above before you decide whether to take part.</p>
 
-        <h2>Compensation</h2>
-        <p>You will be paid for your participation directly through Prolific, at the rate stated on the Prolific study listing. Payment is processed by Prolific once we approve your submission — we do not collect your name, address or bank details for this.</p>
+        <div class="notice-box">
+            By ticking each box below, you are consenting to that element of the study. If a box is left unticked, it will be assumed that you <strong>do not</strong> consent to that part of the study, and you may be deemed ineligible to take part.
+        </div>
 
-        <h2>What Data We Collect</h2>
-        <p>We collect: your Prolific ID (to verify your submission and arrange payment), your age, your questionnaire responses, your ratings of voice samples, and the pitch/formant adjustments you make. We do not collect your name, email, address or any other directly identifying information.</p>
-
-        <h2>Confidentiality and Data Protection</h2>
-        <p>Your Prolific ID is pseudonymous — Prolific knows who it belongs to, but we only use it internally to match your submission for payment and do not share it beyond that purpose. Your responses are stored securely and used solely for academic research purposes, in accordance with UCL data protection policies. You can request deletion of your data by contacting us with your Prolific ID before the data is anonymized for analysis.</p>
-
-        <h2>Contact Information</h2>
-        <p>If you have any questions about this study, please contact the research team at: <strong>ucjvmki@ucl.ac.uk</strong></p>
-        
         <div class="consent-items">
-            <div class="consent-item">
-                <input type="checkbox" id="consent1">
-                <label for="consent1">I have read and understood the information about this research study</label>
+            <div class="consent-items-header">
+                <span>Please tick every box to continue</span>
+                <button type="button" class="select-all-btn" id="selectAllBtn">Select all</button>
             </div>
-            
+
             <div class="consent-item">
-                <input type="checkbox" id="consent2">
-                <label for="consent2">I understand that my participation is voluntary and I can withdraw at any time</label>
+                <input type="checkbox" id="c1">
+                <label for="c1">I confirm that I have read and understood the Information Sheet for the above study. I have had an opportunity to consider the information and what will be expected of me, and I have had the opportunity to ask questions which have been answered to my satisfaction.</label>
             </div>
-            
+
             <div class="consent-item">
-                <input type="checkbox" id="consent3">
-                <label for="consent3">I understand that my Prolific ID will be used only to verify my submission and arrange payment, and that my responses will be used for research purposes only</label>
+                <input type="checkbox" id="c2">
+                <label for="c2">I consent to participate in the study. I understand that my data (age, gender identity, questionnaire responses, voice ratings, and pitch adjustments) will be used only for the purposes explained to me in the Information Sheet.</label>
             </div>
-            
+
             <div class="consent-item">
-                <input type="checkbox" id="consent4">
-                <label for="consent4">I am between 19 and 35 years of age and currently based in the UK</label>
+                <input type="checkbox" id="c3">
+                <label for="c3">I understand that the data gathered in this study will be safely stored on password-protected, encrypted devices, and that it will not be possible to identify me in any report and/or publication.</label>
             </div>
-            
+
             <div class="consent-item">
-                <input type="checkbox" id="consent5">
-                <label for="consent5">I agree to participate in this study</label>
+                <input type="checkbox" id="c4">
+                <label for="c4">I understand that this study does not involve any audio or video recording of me.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c5">
+                <label for="c5">I understand that my information may be subject to review by responsible individuals from the University and funder (e.g., an ethics scientific officer) for monitoring and audit purposes.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c6">
+                <label for="c6">I understand the potential risks of participating and the support that will be available to me should I become distressed during the course of the research (e.g., Crisis Text Line, Samaritans).</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c7">
+                <label for="c7">I understand the direct/indirect benefits of participating.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c8">
+                <label for="c8">I understand that the data will be collected for research purposes only and will not be used for any commercialisation, and is solely the responsibility of the researchers undertaking this study.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c9">
+                <label for="c9">I understand that my participation is voluntary and that I am free to withdraw at any time without giving a reason and without it affecting any of my rights. I understand that if I withdraw, any personal data I have provided up to that point will be deleted unless I agree otherwise &mdash; and that once my data has been anonymised, it will no longer be possible to withdraw it.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c10">
+                <label for="c10">I understand that I will be compensated, if applicable, for the portion of time spent in the study if I choose to withdraw, and that apart from this compensation I will not otherwise benefit financially from this study or any outcome it may result in.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c11">
+                <label for="c11">I understand that the data gathered during this study will be reported anonymised across all participants, with no means of identifying me as an individual.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c12">
+                <label for="c12">I confirm that I understand the eligibility (inclusion) and exclusion criteria detailed in the Information Sheet, and I confirm that I meet the eligibility criteria for this study (aged 19&ndash;35, currently based in the UK, and a fluent English speaker) and do not fall under the exclusion criteria.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c13">
+                <label for="c13">I am aware of who I should contact if I wish to lodge a complaint (Martin Dechant, m.dechant@ucl.ac.uk, or the Chair of the UCL Research Ethics Committee, ethics@ucl.ac.uk).</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c14">
+                <label for="c14">I understand what personal data is used for this study and how it will be processed, in accordance with the data protection privacy notice described in the Information Sheet.</label>
+            </div>
+
+            <div class="consent-item">
+                <input type="checkbox" id="c15">
+                <label for="c15"><strong>I voluntarily agree to take part in this study.</strong></label>
             </div>
         </div>
-        
+
+        <div class="optional-section">
+            <h3>Optional questions</h3>
+
+            <div class="optional-question">
+                <p>Would you like to receive a summary of the non-identifiable results and/or any related publications once the study is complete?</p>
+                <div class="radio-row">
+                    <label><input type="radio" name="wantsResults" value="yes"> Yes</label>
+                    <label><input type="radio" name="wantsResults" value="no" checked> No</label>
+                </div>
+            </div>
+
+            <div class="optional-question">
+                <p>Would you like to be contacted (via Prolific) in the future about follow-up studies to this project, or future studies of a similar nature?</p>
+                <div class="radio-row">
+                    <label><input type="radio" name="futureContact" value="yes"> Yes</label>
+                    <label><input type="radio" name="futureContact" value="no" checked> No</label>
+                </div>
+            </div>
+        </div>
+
         <div class="error-message" id="errorMessage">
-            Please check all boxes to proceed
+            Please check all boxes above to proceed
         </div>
-        
+
         <div class="buttons">
             <button class="btn-back" onclick="location.href='/welcome'">Back</button>
             <button class="btn-agree" id="agreeBtn" disabled>I Agree - Start Study</button>
@@ -200,36 +359,36 @@
 
 
     <script>
-        const finalConsent = document.getElementById('consent5');
-        const topCheckboxes = ['consent1', 'consent2', 'consent3', 'consent4']
-            .map(id => document.getElementById(id));
+        const requiredCheckboxes = Array.from({length: 15}, (_, i) => document.getElementById('c' + (i + 1)));
         const agreeBtn = document.getElementById('agreeBtn');
         const errorMessage = document.getElementById('errorMessage');
+        const selectAllBtn = document.getElementById('selectAllBtn');
 
         function updateButtonState() {
-            const topAllChecked = topCheckboxes.every(cb => cb.checked);
-            agreeBtn.disabled = !topAllChecked;
-            if (topAllChecked) {
+            const allChecked = requiredCheckboxes.every(cb => cb.checked);
+            agreeBtn.disabled = !allChecked;
+            if (allChecked) {
                 errorMessage.classList.remove('active');
             }
         }
 
-        topCheckboxes.forEach(checkbox => {
+        requiredCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', updateButtonState);
         });
 
-        finalConsent.addEventListener('change', () => {
-            topCheckboxes.forEach(cb => cb.checked = finalConsent.checked);
+        selectAllBtn.addEventListener('click', () => {
+            const allChecked = requiredCheckboxes.every(cb => cb.checked);
+            requiredCheckboxes.forEach(cb => cb.checked = !allChecked);
             updateButtonState();
         });
 
         agreeBtn.addEventListener('click', async () => {
-            const topAllChecked = topCheckboxes.every(cb => cb.checked);
-            if (!topAllChecked) {
+            const allChecked = requiredCheckboxes.every(cb => cb.checked);
+            if (!allChecked) {
                 errorMessage.classList.add('active');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/submit-consent', { method: 'POST' });
                 const data = await response.json();
