@@ -651,6 +651,11 @@ def reset_data():
     return jsonify({'success': True, 'files_removed': removed})
 
 
+@app.route('/debrief')
+def debrief():
+    return render_template('debrief.html')
+
+
 @app.route('/thankyou')
 def thankyou():
     prolific_url = None
