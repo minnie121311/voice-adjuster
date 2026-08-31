@@ -119,6 +119,26 @@ def submit_consent():
 
         print(f"Consent saved: {session['study_session_id']}")
 
+        data = request.get_json(silent=True) or {}
+        wants_results = bool(data.get('wants_results'))
+        results_email = (data.get('results_email') or '').strip()
+        future_contact = bool(data.get('future_contact'))
+
+        if wants_results and results_email:
+            body = f'''A participant has requested a summary of the study results.
+
+Session ID: {session['study_session_id']}
+Participant email: {results_email}
+Also open to future-study contact: {'Yes' if future_contact else 'No'}
+Consented at: {session['consent_time']}'''
+            ok, detail = send_email_resend(
+                RESEARCHER_EMAIL,
+                'Voice Study - Results Requested',
+                body
+            )
+            if not ok:
+                print(f"Results-request email failed: {detail}")
+
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
