@@ -476,8 +476,13 @@
             }, 1000);
 
             audioPlayer.onended = function() {
-                hasListenedEnough = true;
-                updateListenTimer();
+                if (!hasListenedEnough) {
+                    hasListenedEnough = true;
+                    updateListenTimer();
+                }
+                // Keep playing on loop in the background until the participant moves on
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
             };
 
             updateProgress();
