@@ -285,7 +285,7 @@
                 <p>You will hear <strong>negative messages, positive messages, and informational messages</strong> delivered at various pitch levels.</p>
                 <p><strong>Please listen carefully</strong> to each voice and evaluate your feelings about the speaker based on the questions provided.</p>
                 <p>There are <strong>36 voice samples</strong> in total. You can navigate back and forth between samples if needed.</p>
-                <p><strong>Note:</strong> Each audio will play automatically and you must listen for at least 5 seconds before proceeding.</p>
+                <p><strong>Note:</strong> Each audio will play automatically and you must listen to the entire clip before proceeding.</p>
             </div>
 
             <button class="btn-start" onclick="startEvaluation()">Start Evaluation</button>
@@ -305,7 +305,7 @@
                     <source id="audioSource" src="" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
-                <div class="listen-timer" id="listenTimer">⏱ Please listen for at least 5 seconds...</div>
+                <div class="listen-timer" id="listenTimer">⏱ Please listen to the full audio before proceeding...</div>
             </div>
 
             <form id="evaluationForm">
@@ -494,6 +494,7 @@
                 timer.textContent = '⏱ Please listen to the full audio before proceeding';
                 timer.className = 'listen-timer';
             }
+            document.getElementById('nextBtn').disabled = !hasListenedEnough;
         }
 
         function updateProgress() {
