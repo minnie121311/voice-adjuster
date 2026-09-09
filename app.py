@@ -60,7 +60,7 @@ ALL_DATA_HEADER = [
     'phase1_audio', 'phase1_trustworthiness', 'phase1_anxiety',
     'phase1_preference', 'phase1_dominance', 'phase1_warmth', 'phase1_listen_time',
     'phase2_folder', 'phase2_formant', 'phase2_pitch',
-    'prolific_id', 'age'
+    'prolific_id', 'age', 'gender'
 ]
 
 if not os.path.exists(ALL_DATA_CSV):
@@ -114,7 +114,7 @@ def submit_consent():
                 'consent',
                 True,
                 session['consent_time'],
-                '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+                '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
             ])
 
         print(f"Consent saved: {session['study_session_id']}")
@@ -155,12 +155,14 @@ def submit_personal_info():
         data = request.json or {}
         prolific_id = (data.get('prolific_id') or '').strip()
         age = (data.get('age') or '').strip()
+        gender = (data.get('gender') or '').strip()
 
-        if not prolific_id or not age:
-            return jsonify({'error': 'prolific_id and age are required'}), 400
+        if not prolific_id or not age or not gender:
+            return jsonify({'error': 'prolific_id, age and gender are required'}), 400
 
         session['prolific_id'] = prolific_id
         session['age'] = age
+        session['gender'] = gender
 
         if 'study_session_id' not in session:
             session['study_session_id'] = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
@@ -175,7 +177,7 @@ def submit_personal_info():
                 '', '', '',
                 '', '', '', '', '', '', '',
                 '', '', '',
-                prolific_id, age
+                prolific_id, age, gender
             ])
 
         print(f"Personal info saved: {session['study_session_id']} prolific_id={prolific_id}")
@@ -212,7 +214,7 @@ def submit_lsas():
                 '', '',
                 fear_total, avoidance_total, total_score,
                 '', '', '', '', '', '', '', '', '', '',
-                '', ''
+                '', '', ''
             ])
 
         print(f"LSAS saved: Fear={fear_total}, Avoidance={avoidance_total}, Total={total_score}")
@@ -254,7 +256,7 @@ def submit_phase1():
                     resp.get('warmth'),
                     resp.get('listenTime', 0),
                     '', '', '',
-                    '', ''
+                    '', '', ''
                 ])
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -433,7 +435,7 @@ def submit_adjustment():
                 data.get('folder'),
                 data.get('formant'),
                 data.get('pitch'),
-                '', ''
+                '', '', ''
             ])
 
         session['current_index'] = index + 1
@@ -478,12 +480,13 @@ def build_master_workbook():
     # --- Sheet 1: Payment (Prolific ID + age, for payment reconciliation) ---
     ws0 = wb.active
     ws0.title = 'Payment'
-    ws0.append(['Session ID', 'Prolific ID', 'Age'])
+    ws0.append(['Session ID', 'Prolific ID', 'Age', 'Gender'])
     for sid, rows in sessions.items():
         pi_row = next((r for r in rows if r[2] == 'personal_info'), None)
         prolific_id = pi_row[18] if pi_row else ''
         age = pi_row[19] if pi_row else ''
-        ws0.append([sid, prolific_id, age])
+        gender = pi_row[20] if pi_row and len(pi_row) > 20 else ''
+        ws0.append([sid, prolific_id, age, gender])
 
     # --- Sheet 2: Phase 1 wide (all participants) ---
     ws1 = wb.create_sheet('Phase 1')

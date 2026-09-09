@@ -157,6 +157,16 @@
                         <div class="field-hint">This study is for participants aged 19–35, based in the UK (already screened via Prolific).</div>
                     </div>
                 </div>
+                <div class="field-row single">
+                    <div class="field-group">
+                        <label>Gender</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="gender" value="Male"> Male</label>
+                            <label><input type="radio" name="gender" value="Female"> Female</label>
+                            <label><input type="radio" name="gender" value="Prefer not to say"> Prefer not to say</label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </form>
@@ -174,6 +184,8 @@
             const errorMessage = document.getElementById('errorMessage');
             const prolificId = document.getElementById('prolificId').value.trim();
             const age = document.getElementById('age').value.trim();
+            const genderInput = document.querySelector('input[name="gender"]:checked');
+            const gender = genderInput ? genderInput.value : '';
 
             if (!prolificId) {
                 errorMessage.textContent = 'Please enter your Prolific ID.';
@@ -185,13 +197,18 @@
                 errorMessage.classList.add('active');
                 return;
             }
+            if (!gender) {
+                errorMessage.textContent = 'Please select your gender.';
+                errorMessage.classList.add('active');
+                return;
+            }
             errorMessage.classList.remove('active');
 
             try {
                 const response = await fetch('/submit-personal-info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prolific_id: prolificId, age: age })
+                    body: JSON.stringify({ prolific_id: prolificId, age: age, gender: gender })
                 });
                 const data = await response.json();
                 if (data.success) {
