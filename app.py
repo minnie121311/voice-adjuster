@@ -25,8 +25,10 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-pr
 
 # 연구자 설정
 RESEARCHER_EMAIL = 'minnie1211@gmail.com'
-SMTP_EMAIL = 'minnie1211@gmail.com'
-SMTP_PASSWORD = 'apck becz medp lddg'
+
+# Admin endpoint key - set ADMIN_KEY on Railway; falls back to the old
+# hardcoded value (now public in git history) only for local dev.
+ADMIN_KEY = os.environ.get('ADMIN_KEY', 'ucl-voice-study-2026')
 
 # Prolific 완료 코드 - Prolific에서 study를 만들면 발급되는 completion code.
 # 값이 설정되기 전까지는 thankyou 페이지에 "Return to Prolific" 버튼이 표시되지 않음.
@@ -611,7 +613,7 @@ Attached is the updated master Excel file covering ALL participants to date, wit
 @app.route('/admin/test-email')
 def test_email():
     admin_key = request.args.get('key')
-    if admin_key != 'ucl-voice-study-2026':
+    if admin_key != ADMIN_KEY:
         return jsonify({'error': 'Unauthorized'}), 403
 
     ok, detail = send_email_resend(
@@ -625,7 +627,7 @@ def test_email():
 @app.route('/admin/csv-status')
 def csv_status():
     admin_key = request.args.get('key')
-    if admin_key != 'ucl-voice-study-2026':
+    if admin_key != ADMIN_KEY:
         return jsonify({'error': 'Unauthorized'}), 403
 
     rows = 0
@@ -651,7 +653,7 @@ def csv_status():
 @app.route('/admin/reset-data', methods=['POST'])
 def reset_data():
     admin_key = request.args.get('key')
-    if admin_key != 'ucl-voice-study-2026':
+    if admin_key != ADMIN_KEY:
         return jsonify({'error': 'Unauthorized'}), 403
 
     with open(ALL_DATA_CSV, 'w', newline='', encoding='utf-8') as f:
@@ -690,7 +692,7 @@ def thankyou():
 @app.route('/download-csv')
 def download_csv():
     admin_key = request.args.get('key')
-    if admin_key != 'ucl-voice-study-2026':
+    if admin_key != ADMIN_KEY:
         return jsonify({'error': 'Unauthorized'}), 403
 
     try:
@@ -707,7 +709,7 @@ def download_csv():
 @app.route('/admin/download-excel')
 def download_excel():
     admin_key = request.args.get('key')
-    if admin_key != 'ucl-voice-study-2026':
+    if admin_key != ADMIN_KEY:
         return jsonify({'error': 'Unauthorized'}), 403
 
     if not EXCEL_AVAILABLE:
