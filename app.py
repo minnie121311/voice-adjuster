@@ -676,6 +676,30 @@ def reset_data():
     return jsonify({'success': True, 'files_removed': removed})
 
 
+@app.route('/admin/restore-data', methods=['POST'])
+def restore_data():
+    """One-off recovery endpoint: append raw CSV rows (no header) to ALL_DATA_CSV.
+    Each row must already match ALL_DATA_HEADER's column count."""
+    admin_key = request.args.get('key')
+    if admin_key != ADMIN_KEY:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    body = request.get_data(as_text=True) or ''
+    reader = csv.reader(io.StringIO(body))
+    rows = [r for r in reader if r]
+
+    bad = [i for i, r in enumerate(rows) if len(r) != len(ALL_DATA_HEADER)]
+    if bad:
+        return jsonify({'error': f'{len(bad)} row(s) have wrong column count', 'first_bad_index': bad[0]}), 400
+
+    with open(ALL_DATA_CSV, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerows(rows)
+
+    print(f"Restored {len(rows)} rows via /admin/restore-data")
+    return jsonify({'success': True, 'rows_restored': len(rows)})
+
+
 @app.route('/debrief')
 def debrief():
     return render_template('debrief.html')
