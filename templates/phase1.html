@@ -69,6 +69,26 @@
             color: #333;
         }
 
+        .instruction-page .instruction-text ol {
+            margin: 0 0 15px 20px;
+            padding: 0;
+        }
+
+        .instruction-page .instruction-text ol li {
+            margin-bottom: 10px;
+        }
+
+        .instruction-page .instruction-text .note-box {
+            background: #fffaf0;
+            border: 1px solid #f0d9a8;
+            border-left: none;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+
         .btn-start {
             background: #333;
             color: white;
@@ -82,10 +102,39 @@
             margin-top: 30px;
         }
 
-        .btn-start:hover {
+        .btn-start:hover:not(:disabled) {
             background: #555;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-start:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .understand-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .understand-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .understand-checkbox label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.5;
+            cursor: pointer;
         }
 
         .evaluation-page {
@@ -281,14 +330,24 @@
 
             <div class="instruction-text">
                 <p><strong>Instructions:</strong></p>
-                <p>In this phase, you will listen to voice messages from an HR representative.</p>
-                <p>You will hear <strong>negative messages, positive messages, and informational messages</strong> delivered at various pitch levels.</p>
-                <p><strong>Please listen carefully</strong> to each voice and evaluate your feelings about the speaker based on the questions provided.</p>
-                <p>There are <strong>36 voice samples</strong> in total. You can navigate back and forth between samples if needed.</p>
+                <ol>
+                    <li>Imagine that you are an employee.</li>
+                    <li>From that perspective, you will hear a message from HR.</li>
+                    <li>Listen to the message and answer the questions that follow.</li>
+                    <li>There are <strong>36 samples</strong> in total, and you may listen to each one as many times as you like.</li>
+                </ol>
                 <p><strong>Note:</strong> Each audio will play automatically and you must listen to the entire clip before proceeding.</p>
+                <div class="note-box">
+                    <strong>Note:</strong> This study is not about your preference for the AI voice itself — it is about how the <strong>message content and tone</strong> come across. Please evaluate the tone used to deliver the message honestly, rather than your own preference for the AI voice.
+                </div>
             </div>
 
-            <button class="btn-start" onclick="startEvaluation()">Start Evaluation</button>
+            <div class="understand-checkbox">
+                <input type="checkbox" id="understandCheckbox">
+                <label for="understandCheckbox">I have read and understood the instructions above.</label>
+            </div>
+
+            <button class="btn-start" id="startBtn" onclick="startEvaluation()" disabled>Proceed to the Experiment →</button>
         </div>
 
         <div class="evaluation-page" id="evaluationPage">
@@ -426,6 +485,10 @@
         let listenTime = 0;
         let listenInterval = null;
         let hasListenedEnough = false;
+
+        document.getElementById('understandCheckbox').addEventListener('change', function() {
+            document.getElementById('startBtn').disabled = !this.checked;
+        });
 
         function startEvaluation() {
             document.getElementById('instructionPage').style.display = 'none';
