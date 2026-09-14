@@ -74,6 +74,35 @@
             font-weight: 400;
             cursor: pointer;
         }
+        .quality-notice {
+            background: #fffaf0;
+            border-color: #f0d9a8;
+        }
+        .quality-text {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .quality-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .quality-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        .quality-checkbox label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.5;
+            cursor: pointer;
+        }
         .placeholder-note {
             text-align: center;
             color: #bbb;
@@ -170,6 +199,23 @@
                 </div>
             </div>
 
+            <div class="section quality-notice">
+                <div class="section-title">Data Quality Notice</div>
+                <p class="quality-text">
+                    This study relies on detailed acoustic calibration, so your careful attention matters.
+                    We have set the payment for this study above Prolific's suggested rate specifically to
+                    reward participants who provide genuine, high-quality data. To protect this, the study
+                    includes repeated trial conditions that let us rigorously verify response reliability.
+                    Submissions that fail this reliability check, or that are completed far faster than our
+                    piloted completion time, may be rejected and payment withheld. Please listen to each
+                    audio clip carefully and answer as thoughtfully as you can.
+                </p>
+                <div class="quality-checkbox">
+                    <input type="checkbox" id="qualityPromise">
+                    <label for="qualityPromise">I understand, and I promise that I will provide honest, genuine responses throughout this study.</label>
+                </div>
+            </div>
+
         </form>
 
         <div class="error-message" id="errorMessage"></div>
@@ -200,6 +246,11 @@
             }
             if (!gender) {
                 errorMessage.textContent = 'Please select your gender.';
+                errorMessage.classList.add('active');
+                return;
+            }
+            if (!document.getElementById('qualityPromise').checked) {
+                errorMessage.textContent = 'Please confirm the data quality notice before proceeding.';
                 errorMessage.classList.add('active');
                 return;
             }
