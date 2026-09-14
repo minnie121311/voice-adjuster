@@ -73,6 +73,55 @@
         .instruction-box strong {
             color: #000;
         }
+        .instruction-box ol {
+            margin: 0 0 15px 20px;
+            padding: 0;
+        }
+        .instruction-box ol li {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+        .instruction-box .note-box {
+            background: #fffaf0;
+            border: 1px solid #f0d9a8;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #555;
+        }
+        .instruction-box .note-box p {
+            margin-bottom: 8px;
+        }
+        .instruction-box .note-box p:last-child {
+            margin-bottom: 0;
+        }
+        .understand-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .understand-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        .understand-checkbox label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+        .btn-understand:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .message-instruction {
             text-align: center;
             color: #555;
@@ -158,7 +207,7 @@
             padding: 16px;
             font-size: 16px;
         }
-        .btn-understand:hover {
+        .btn-understand:hover:not(:disabled) {
             background: #555;
         }
         .btn-play {
@@ -266,13 +315,22 @@
             <h1>Voice Adjustment Study - Phase 2</h1>
             <div class="instruction-box">
                 <p><strong>Study Instructions</strong></p>
-                <p>You will receive <strong>calls from the HR department</strong>.</p>
-                <p>You will hear positive evaluations, negative evaluations, and informational messages.</p>
-                <p>After listening to each message, <strong>adjust the voice to what feels most comfortable to you</strong> using the sliders.</p>
-                <p><strong>⚠️ You must play the audio at least once before submitting.</strong></p>
-                <p><strong>You can only submit once per message.</strong></p>
+                <ol>
+                    <li>Imagine that you are an employee.</li>
+                    <li>You will hear messages from HR in a variety of situations.</li>
+                    <li>Adjust the Formant and Pitch to whatever sounds most comfortable to you.</li>
+                    <li>There are over 100 possible combinations for each message. Take your time and carefully adjust the sliders until you find the tone you like most.</li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>⚠️ You must play the audio at least once before submitting.</strong></p>
+                    <p><strong>You can only submit once per message.</strong></p>
+                </div>
             </div>
-            <button class="btn-understand" onclick="startExperiment()">I Understand</button>
+            <div class="understand-checkbox">
+                <input type="checkbox" id="understandCheckbox">
+                <label for="understandCheckbox">I have read and understood the instructions above.</label>
+            </div>
+            <button class="btn-understand" id="understandBtn" onclick="startExperiment()" disabled>I Understand</button>
         </div>
 
         <!-- Main Experiment Screen -->
@@ -336,6 +394,10 @@
         let totalFiles = 9;
         let currentAudio = null;
         let hasPlayedAudio = false; // 🔥 NEW: Track if audio was played
+
+        document.getElementById('understandCheckbox').addEventListener('change', function() {
+            document.getElementById('understandBtn').disabled = !this.checked;
+        });
 
         const formantSlider = document.getElementById('formant');
         const pitchSlider = document.getElementById('pitch');
