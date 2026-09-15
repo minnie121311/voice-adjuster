@@ -103,6 +103,17 @@
             line-height: 1.5;
             cursor: pointer;
         }
+        .not-eligible {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            color: #991b1b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .not-eligible strong { display: block; margin-bottom: 8px; font-size: 15px; }
         .placeholder-note {
             text-align: center;
             color: #bbb;
@@ -164,26 +175,32 @@
         <form id="personalInfoForm">
 
             <div class="section">
-                <div class="section-title">Prolific verification</div>
+                <div class="section-title">Eligibility Screening</div>
                 <div class="field-row single">
                     <div class="field-group">
-                        <label for="prolificId">Prolific ID</label>
-                        <input type="text" id="prolificId" autocomplete="off" placeholder="e.g. 5f2a1b3c4d5e6f7a8b9c0d1e"
-                               value="{{ prolific_pid }}" {% if prolific_pid %}readonly style="background:#f0f0f0;color:#666;"{% endif %}>
-                        <div class="field-hint">
-                          {% if prolific_pid %}
-                            Detected automatically from your Prolific link.
-                          {% else %}
-                            Copy this from the Prolific study page. We use it only to verify your submission and arrange payment via Prolific — we do not collect your name, address or bank details.
-                          {% endif %}
+                        <label>Work experience</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="employment" value="Currently employed"> Currently employed</label>
+                            <label><input type="radio" name="employment" value="Recently left a job"> Recently left a job</label>
+                            <label><input type="radio" name="employment" value="Actively job-seeking"> Actively job-seeking</label>
+                            <label><input type="radio" name="employment" value="Never had a job"> I have never had a job</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="field-row single">
+                    <div class="field-group">
+                        <label>Are you currently residing in the UK?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ukResident" value="Yes"> Yes</label>
+                            <label><input type="radio" name="ukResident" value="No"> No</label>
                         </div>
                     </div>
                 </div>
                 <div class="field-row single">
                     <div class="field-group">
                         <label for="age">Age</label>
-                        <input type="number" id="age" min="16" max="100" placeholder="e.g. 27">
-                        <div class="field-hint">This study is for participants aged 19–35, based in the UK (already screened via Prolific).</div>
+                        <input type="number" id="age" min="19" max="35" placeholder="e.g. 27">
+                        <div class="field-hint">This study is for participants aged 19–35.</div>
                     </div>
                 </div>
                 <div class="field-row single">
@@ -199,13 +216,17 @@
                 </div>
             </div>
 
+            <div class="not-eligible" id="notEligible" style="display:none;">
+                <strong>Unfortunately, you do not meet the eligibility criteria for this study.</strong>
+                <p>Please return to Prolific without completing this study. You will not be able to proceed further.</p>
+            </div>
+
             <div class="section quality-notice">
                 <div class="section-title">Data Quality Notice <span style="color:#dc2626;font-style:italic;font-weight:400;">You must read this.</span></div>
                 <p class="quality-text">
                     This study relies on detailed acoustic calibration, so your careful attention matters.
-                    We have set the payment for this study above Prolific's suggested rate specifically to
-                    reward participants who provide genuine, high-quality data. To protect this, the study
-                    includes repeated trial conditions that let us rigorously verify response reliability.
+                    To protect this, the study includes repeated trial conditions that let us rigorously
+                    verify response reliability.
                     Submissions that fail this reliability check, or that are completed far faster than our
                     piloted completion time, may be rejected and payment withheld. Please listen to each
                     audio clip carefully and answer as thoughtfully as you can.
@@ -227,15 +248,30 @@
     </div>
 
     <script>
+        function showNotEligible() {
+            document.getElementById('personalInfoForm').style.display = 'none';
+            document.querySelector('.buttons').style.display = 'none';
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('notEligible').style.display = 'block';
+        }
+
         async function submitForm() {
             const errorMessage = document.getElementById('errorMessage');
-            const prolificId = document.getElementById('prolificId').value.trim();
+            const employmentInput = document.querySelector('input[name="employment"]:checked');
+            const employment = employmentInput ? employmentInput.value : '';
+            const ukInput = document.querySelector('input[name="ukResident"]:checked');
+            const ukResident = ukInput ? ukInput.value : '';
             const age = document.getElementById('age').value.trim();
             const genderInput = document.querySelector('input[name="gender"]:checked');
             const gender = genderInput ? genderInput.value : '';
 
-            if (!prolificId) {
-                errorMessage.textContent = 'Please enter your Prolific ID.';
+            if (!employment) {
+                errorMessage.textContent = 'Please select your work experience.';
+                errorMessage.classList.add('active');
+                return;
+            }
+            if (!ukResident) {
+                errorMessage.textContent = 'Please answer whether you currently reside in the UK.';
                 errorMessage.classList.add('active');
                 return;
             }
@@ -254,13 +290,20 @@
                 errorMessage.classList.add('active');
                 return;
             }
+
+            const ageNum = parseInt(age, 10);
+            if (employment === 'Never had a job' || ukResident === 'No' || ageNum < 19 || ageNum > 35) {
+                showNotEligible();
+                return;
+            }
+
             errorMessage.classList.remove('active');
 
             try {
                 const response = await fetch('/submit-personal-info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prolific_id: prolificId, age: age, gender: gender })
+                    body: JSON.stringify({ age: age, gender: gender, employment: employment, uk_resident: ukResident })
                 });
                 const data = await response.json();
                 if (data.success) {

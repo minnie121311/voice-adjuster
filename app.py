@@ -155,12 +155,14 @@ def personal_info():
 def submit_personal_info():
     try:
         data = request.json or {}
-        prolific_id = (data.get('prolific_id') or '').strip()
+        prolific_id = session.get('prolific_pid', '')
         age = (data.get('age') or '').strip()
         gender = (data.get('gender') or '').strip()
 
-        if not prolific_id or not age or not gender:
-            return jsonify({'error': 'prolific_id, age and gender are required'}), 400
+        if not prolific_id:
+            return jsonify({'error': 'No Prolific ID found for this session. Please restart the study from your original Prolific link.'}), 400
+        if not age or not gender:
+            return jsonify({'error': 'age and gender are required'}), 400
 
         session['prolific_id'] = prolific_id
         session['age'] = age
